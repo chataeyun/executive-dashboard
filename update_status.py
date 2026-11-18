@@ -173,6 +173,19 @@ def find_item(track: dict, item_id: str) -> dict:
     raise Fail(f"체크 항목을 찾지 못했습니다: {item_id} ({track.get('id')} 항목: {ids})")
 
 
+def _validate_action_urls(track: dict) -> list[str]:
+    """클릭 액션 카드의 링크는 공개 http(s) 주소만 허용합니다."""
+    errors: list[str] = []
+    entries = list(track.get("tracking_items", [])) + list(track.get("open_questions", []))
+    for entry in entries:
+        url = entry.get("action_url")
+        if url and not str(url).startswith(("http://", "https://")):
+            errors.append(
+                f"{track.get('id')}/{entry.get('id', '?')}: action_url 은 http(s) 여야 합니다 ({url})"
+            )
+    return errors
+
+
 # ---------------------------------------------------------------- 점검(형식)
 def validate_status(data: dict) -> list[str]:
     errors: list[str] = []
@@ -218,6 +231,7 @@ def validate_status(data: dict) -> list[str]:
                     datetime.fromisoformat(at)
                 except ValueError:
                     errors.append(f"{tid}.{key}.at 시각 형식 오류: {at}")
+        errors += _validate_action_urls(track)
 
     for alert in data.get("alerts", []):
         if alert.get("track") and alert.get("track") not in seen:

@@ -11,6 +11,8 @@
   var STORE_KEY = "execdash.v1.checks";
   var VIEW_KEY = "execdash.v2.view";
   var TRACK_KEY = "execdash.v3.track";
+  var ACT_KEY = "execdash.v4.actions";
+  var DRAFT_KEY = "execdash.v4.drafts";
   var TZ = "Asia/Seoul";
   var WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
   var VIEWS = ["tracks", "skills", "brain"];
@@ -50,13 +52,15 @@
     brainQ: ""
   };
 
-  var localChecks = readStore();
+  var localChecks = readMap(STORE_KEY);
+  var localActions = readMap(ACT_KEY);
+  var localDrafts = readMap(DRAFT_KEY);
   var scrollMemo = {};
 
   /* ---------- 저장소 ---------- */
-  function readStore() {
+  function readMap(key) {
     try {
-      var raw = localStorage.getItem(STORE_KEY);
+      var raw = localStorage.getItem(key);
       if (!raw) return {};
       var parsed = JSON.parse(raw);
       return parsed && typeof parsed === "object" ? parsed : {};
@@ -65,12 +69,16 @@
     }
   }
 
-  function writeStore() {
+  function writeMap(key, obj) {
     try {
-      localStorage.setItem(STORE_KEY, JSON.stringify(localChecks));
+      localStorage.setItem(key, JSON.stringify(obj));
     } catch (e) {
       /* 저장 공간이 막혀 있어도 화면은 계속 동작합니다. */
     }
+  }
+
+  function writeStore() {
+    writeMap(STORE_KEY, localChecks);
   }
 
   function checkKey(trackId, itemId) {
@@ -594,7 +602,14 @@
     var s = statsFor(track);
     var f = trackFacts(track);
     var st = statusMeta(track);
-    var items = (track.tracking_items || []).slice(0, 3);
+    var all = (track.tracking_items || []).slice();
+    var prio = { warn: 0, wait: 1, info: 2, ok: 3 };
+    all.sort(function (a, b) {
+      var pa = prio[a.tone] == null ? 9 : prio[a.tone];
+      var pb = prio[b.tone] == null ? 9 : prio[b.tone];
+      return pa - pb;
+    });
+    var items = all.slice(0, 3);
     var nxt = fmtWhen(track.next_run && track.next_run.at, track.next_run && track.next_run.label);
     return (
       '<article class="ov-card" data-open="' + esc(track.id) + '"' +
@@ -612,10 +627,17 @@
         '<ul class="ov-list">' +
           items
             .map(function (i) {
+              var key = track.id + ":" + i.id;
               return (
-                '<li><i class="dot ' + esc(i.tone || "info") + '" aria-hidden="true"></i>' +
-                '<span class="ov-list-name">' + esc(i.title) + "</span>" +
-                '<span class="ov-list-state">' + esc(i.status) + "</span></li>"
+                '<li>' +
+                  '<button type="button" class="ov-item" data-act="jump" data-key="' + esc(key) + '"' +
+                    ' aria-label="' + esc(i.title) + ' 바로 진행">' +
+                    '<i class="dot ' + esc(i.tone || "info") + '" aria-hidden="true"></i>' +
+                    '<span class="ov-list-name">' + esc(i.title) + "</span>" +
+                    '<span class="ov-list-state">' + esc(i.status) + "</span>" +
+                    '<span class="ov-item-go" aria-hidden="true">→</span>' +
+                  "</button>" +
+                "</li>"
               );
             })
             .join("") +
@@ -631,25 +653,161 @@
     );
   }
 
-  function renderTItem(item) {
-    return (
-      '<li class="titem tone-' + esc(item.tone || "info") + '">' +
-        '<div class="titem-top">' +
-          '<span class="titem-kind">' + esc(item.kind || "항목") + "</span>" +
-          '<h4 class="titem-title">' + esc(item.title) + "</h4>" +
-          '<span class="titem-state">' + esc(item.status) + "</span>" +
-        "</div>" +
-        (item.detail ? '<p class="titem-detail">' + esc(item.detail) + "</p>" : "") +
-        (item.criteria ? '<p class="titem-crit"><span>기준</span>' + esc(item.criteria) + "</p>" : "") +
-        (item.next ? '<p class="titem-next"><span>다음</span>' + esc(item.next) + "</p>" : "") +
-      "</li>"
-    );
-  }
-
   function whoLabel(who) {
     if (who === "user") return "내 확인";
     if (who === "sub") return "워커";
     return "차차차";
+  }
+
+  /* =========================================================
+     액션 카드 — 추적 항목 · 미결 사항 공통
+     카드를 누르면 아래에 실행/답변 패널이 열립니다.
+     ========================================================= */
+  function actionKey(track, entry) {
+    return track.id + ":" + entry.id;
+  }
+
+  function panelId(key) {
+    return "ap-" + String(key).replace(/[^a-zA-Z0-9_-]/g, "-");
+  }
+
+  function actionEntries(track) {
+    var out = [];
+    (track.tracking_items || []).forEach(function (item) {
+      if (!item || !item.id) return;
+      out.push({ key: track.id + ":" + item.id, id: item.id, kind: "item", data: item });
+    });
+    (track.open_questions || []).forEach(function (q) {
+      if (!q || !q.id) return;
+      out.push({ key: track.id + ":" + q.id, id: q.id, kind: "question", data: q });
+    });
+    return out;
+  }
+
+  function actionEntry(track, id) {
+    var list = actionEntries(track);
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) return list[i];
+    }
+    return null;
+  }
+
+  function entryByKey(key) {
+    var at = String(key).indexOf(":");
+    if (at < 0) return null;
+    var track = trackById(key.slice(0, at));
+    if (!track) return null;
+    return actionEntry(track, key.slice(at + 1));
+  }
+
+  function copyLabel(entry) {
+    var d = entry.data || {};
+    return d.action_title || d.title || d.text || "항목";
+  }
+
+  function isActionDone(key) {
+    return !!localActions[key];
+  }
+
+  function renderActionPanel(entry) {
+    var d = entry.data || {};
+    var key = entry.key;
+    var hasInput = !!d.input_placeholder;
+    var hasPrompt = !!d.action_prompt;
+    if (!hasInput && !hasPrompt && !d.action_url) return "";
+
+    var label = d.action_label || (hasInput ? "답변 복사" : "문구 복사");
+    var draft = localDrafts[key] || "";
+    var done = isActionDone(key);
+
+    var out = '<div class="action-panel" id="' + esc(panelId(key)) + '" role="region" aria-label="바로 실행 패널" hidden>';
+    out += '<div class="ap-head"><span class="ap-title">바로 실행</span>' +
+      '<span class="ap-step">' +
+      (hasInput
+        ? "답변을 적으면 ‘항목명 답변: 내용’ 형태로 복사됩니다"
+        : "문구를 복사해 차차차에게 붙여 넣으면 바로 진행됩니다") +
+      "</span></div>";
+
+    if (hasPrompt) {
+      out += '<p class="ap-prompt">' + esc(d.action_prompt) + "</p>";
+    }
+
+    if (hasInput) {
+      out += '<label class="ap-field"><span class="ap-field-k">' + esc(d.input_label || "답변") + "</span>" +
+        '<input type="text" class="ap-input" data-answer="' + esc(key) + '" value="' + esc(draft) + '"' +
+        ' placeholder="' + esc(d.input_placeholder) + '" autocomplete="off" enterkeyhint="done"' +
+        ' aria-label="' + esc(copyLabel(entry)) + ' 답변 입력"></label>';
+    }
+
+    out += '<div class="ap-actions">';
+    out += '<button type="button" class="ap-btn primary" data-act="' + (hasInput ? "answer" : "copy") + '" data-key="' + esc(key) + '">' +
+      esc(label) + ' <span aria-hidden="true">⧉</span></button>';
+    if (hasInput && hasPrompt) {
+      out += '<button type="button" class="ap-btn" data-act="copy" data-key="' + esc(key) + '">문구 복사 <span aria-hidden="true">⧉</span></button>';
+    }
+    if (d.action_url) {
+      out += '<a class="ap-btn ghost" href="' + esc(d.action_url) + '" target="_blank" rel="noopener noreferrer">' +
+        esc(d.action_url_label || "열기") + ' <span aria-hidden="true">↗</span></a>';
+    }
+    out += '<button type="button" class="ap-btn done' + (done ? " on" : "") + '" data-act="done" data-key="' + esc(key) + '">' +
+      (done ? "완료 취소" : "완료로 표시") + "</button>";
+    out += "</div></div>";
+    return out;
+  }
+
+  function renderTItem(track, item) {
+    var key = track.id + ":" + item.id;
+    var entry = { key: key, id: item.id, kind: "item", data: item };
+    var panel = renderActionPanel(entry);
+    var done = isActionDone(key);
+    var ctaLabel = item.action_label || "누르면 진행";
+
+    return (
+      '<li class="titem tone-' + esc(item.tone || "info") + (done ? " is-done" : "") + '" data-key="' + esc(key) + '">' +
+        '<button type="button" class="titem-tap" data-act="toggle" data-key="' + esc(key) + '"' +
+          ' aria-expanded="false" aria-controls="' + esc(panelId(key)) + '">' +
+          '<span class="titem-top">' +
+            '<span class="titem-kind">' + esc(item.kind || "항목") + "</span>" +
+            '<span class="titem-title">' + esc(item.title) + "</span>" +
+            '<span class="titem-state">' + esc(item.status) + "</span>" +
+          "</span>" +
+          (item.detail ? '<span class="titem-detail">' + esc(item.detail) + "</span>" : "") +
+          (item.criteria ? '<span class="titem-crit"><span>기준</span>' + esc(item.criteria) + "</span>" : "") +
+          (item.next ? '<span class="titem-next"><span>다음</span>' + esc(item.next) + "</span>" : "") +
+          (panel
+            ? '<span class="titem-cta"><span class="cta-lead">' + (done ? "✓ 완료" : "누르면 진행") + "</span>" +
+              '<span class="cta-label">' + esc(ctaLabel) + "</span>" +
+              '<span class="cta-arrow" aria-hidden="true">→</span></span>'
+            : "") +
+        "</button>" +
+        panel +
+      "</li>"
+    );
+  }
+
+  function renderQItem(track, q, idx) {
+    var id = q.id || "q" + idx;
+    var entry = { key: track.id + ":" + id, id: id, kind: "question", data: q };
+    var panel = renderActionPanel(entry);
+    var done = isActionDone(entry.key);
+    var ctaLabel = q.action_label || "답변 입력";
+
+    return (
+      '<li class="qitem' + (done ? " is-done" : "") + '" data-key="' + esc(entry.key) + '">' +
+        '<button type="button" class="qitem-tap" data-act="toggle" data-key="' + esc(entry.key) + '"' +
+          ' aria-expanded="false" aria-controls="' + esc(panelId(entry.key)) + '">' +
+          '<span class="q-who">' + esc(whoLabel(q.who)) + "</span>" +
+          '<span class="q-text">' + esc(q.text) + "</span>" +
+          (q.due ? '<span class="q-due">' + esc(q.due) + "</span>" : "") +
+          (panel
+            ? '<span class="q-cta"><span class="cta-lead">' + (done ? "✓ 완료" : "누르면 진행") + "</span>" +
+              '<span class="cta-label">' + esc(ctaLabel) + "</span>" +
+              '<span class="cta-arrow" aria-hidden="true">→</span></span>'
+            : "") +
+        "</button>" +
+        panel +
+      "</li>"
+    );
   }
 
   function renderDetail(track) {
@@ -696,23 +854,21 @@
           '<div class="detail-main">' +
             '<section class="dsec">' +
               '<h3 class="dsec-title">🎯 추적 중인 대상 <span class="dsec-count">' + items.length + "</span></h3>" +
+              (items.length ? '<p class="dsec-hint">카드를 누르면 실행·회신 문구 복사, 답변 입력, 완료 표시 패널이 열립니다.</p>' : "") +
               (items.length
-                ? '<ul class="titems">' + items.map(renderTItem).join("") + "</ul>"
+                ? '<ul class="titems">' +
+                  items.map(function (i) { return renderTItem(track, i); }).join("") +
+                  "</ul>"
                 : '<p class="dsec-empty">등록된 추적 항목이 없습니다.</p>') +
             "</section>" +
             '<section class="dsec">' +
               '<h3 class="dsec-title">⏳ 미결 확인 사항 <span class="dsec-count">' + qs.length + "</span></h3>" +
+              (qs.length ? '<p class="dsec-hint">내 확인 항목은 답을 적어 복사하면 그대로 회신됩니다.</p>' : "") +
               (qs.length
                 ? '<ul class="qlist">' +
                   qs
-                    .map(function (q) {
-                      return (
-                        '<li class="qitem">' +
-                          '<span class="q-who">' + esc(whoLabel(q.who)) + "</span>" +
-                          '<span class="q-text">' + esc(q.text) + "</span>" +
-                          (q.due ? '<span class="q-due">' + esc(q.due) + "</span>" : "") +
-                        "</li>"
-                      );
+                    .map(function (q, idx) {
+                      return renderQItem(track, q, idx);
                     })
                     .join("") +
                   "</ul>"
@@ -817,12 +973,17 @@
       alerts.map(function (a) {
         var track = trackById(a.track);
         var icon = a.level === "warn" ? "⚠️" : "ℹ️";
+        var actKey = "";
+        if (track && a.item && actionEntry(track, a.item)) actKey = track.id + ":" + a.item;
         return (
           '<div class="alert ' + esc(a.level || "info") + '">' +
             '<span class="alert-icon" aria-hidden="true">' + icon + "</span>" +
             '<div class="alert-body">' +
               '<p class="alert-title">' + esc(a.title) + "</p>" +
               '<p class="alert-text">' + esc(a.text) + "</p>" +
+              (actKey
+                ? '<button type="button" class="alert-act" data-act="jump" data-key="' + esc(actKey) + '">지금 처리 <span aria-hidden="true">→</span></button>'
+                : "") +
               (track
                 ? '<button type="button" class="alert-link" data-jump="' + esc(track.id) + '">' + esc(track.icon + " " + track.name) + " 트랙 열기 →</button>"
                 : "") +
@@ -1070,17 +1231,122 @@
   }
 
   /* =========================================================
+     액션 카드 동작
+     ========================================================= */
+  function setPanelState(btn, open) {
+    if (!btn) return;
+    var key = btn.getAttribute("data-key") || "";
+    var panel = document.getElementById(panelId(key));
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    if (panel) panel.hidden = !open;
+    var card = btn.closest(".titem, .qitem");
+    if (card) card.classList.toggle("open", !!open);
+  }
+
+  function togglePanel(btn) {
+    var open = btn.getAttribute("aria-expanded") !== "true";
+    setPanelState(btn, open);
+    if (open) {
+      var key = btn.getAttribute("data-key") || "";
+      var panel = document.getElementById(panelId(key));
+      if (panel) {
+        var rect = panel.getBoundingClientRect();
+        if (rect.bottom > window.innerHeight - 8) {
+          panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      }
+      var input = panel && panel.querySelector(".ap-input");
+      if (input && !input.value && window.innerWidth > 720) input.focus();
+    }
+  }
+
+  function jumpToAction(key) {
+    var at = String(key).indexOf(":");
+    if (at < 0) return;
+    var trackId = key.slice(0, at);
+    if (!trackById(trackId)) return;
+    setView("tracks");
+    if (state.track !== trackId) setTrack(trackId, { scroll: false });
+    var btn = document.querySelector('[data-act="toggle"][data-key="' + key + '"]');
+    if (!btn) return;
+    setPanelState(btn, true);
+    var card = btn.closest(".titem, .qitem");
+    if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function toggleDone(key) {
+    var entry = entryByKey(key);
+    if (!entry) return;
+    var on = !localActions[key];
+    if (on) localActions[key] = true;
+    else delete localActions[key];
+    writeMap(ACT_KEY, localActions);
+
+    var card = document.querySelector('.titem[data-key="' + key + '"], .qitem[data-key="' + key + '"]');
+    if (card) card.classList.toggle("is-done", on);
+    var ctaLead = document.querySelector('[data-key="' + key + '"] .cta-lead');
+    if (ctaLead) ctaLead.textContent = on ? "✓ 완료" : "누르면 진행";
+    var doneBtn = document.querySelector('[data-act="done"][data-key="' + key + '"]');
+    if (doneBtn) {
+      doneBtn.textContent = on ? "완료 취소" : "완료로 표시";
+      doneBtn.classList.toggle("on", on);
+    }
+    toast(on ? "완료로 표시했습니다 (이 브라우저에만 저장)" : "완료 표시를 해제했습니다");
+  }
+
+  function handleAct(btn) {
+    var act = btn.getAttribute("data-act");
+    var key = btn.getAttribute("data-key") || "";
+    if (act === "toggle") {
+      togglePanel(btn);
+      return;
+    }
+    if (act === "jump") {
+      jumpToAction(key);
+      return;
+    }
+    if (act === "done") {
+      toggleDone(key);
+      return;
+    }
+    var entry = entryByKey(key);
+    if (!entry) return;
+    if (act === "copy") {
+      if (!entry.data.action_prompt) return;
+      copyText(entry.data.action_prompt, (entry.data.action_label || "실행") + " 문구를 복사했습니다");
+      return;
+    }
+    if (act === "answer") {
+      var input = document.querySelector('[data-answer="' + key + '"]');
+      var value = ((input && input.value) || localDrafts[key] || "").trim();
+      if (!value) {
+        toast("먼저 답변을 입력해 주세요");
+        if (input) input.focus();
+        return;
+      }
+      localDrafts[key] = value;
+      writeMap(DRAFT_KEY, localDrafts);
+      copyText(copyLabel(entry) + " 답변: " + value, "답변을 복사했습니다 — 채팅에 붙여 넣으면 됩니다");
+    }
+  }
+
+  /* =========================================================
      이벤트
      ========================================================= */
   function bindDelegates() {
     document.addEventListener("click", function (event) {
       var target = event.target.closest(
-        "[data-view],[data-track],[data-role],[data-cmd],[data-jump],[data-alerts-toggle]," +
+        "[data-act],[data-view],[data-track],[data-role],[data-cmd],[data-jump],[data-alerts-toggle]," +
         "[data-open],[data-back]," +
         "[data-skill-copy],[data-skill-doc],[data-skill-cat],[data-brain-cat],[data-copy-path]," +
         "[data-brain-item],#reset-checks"
       );
       if (!target) return;
+
+      if (target.hasAttribute("data-act")) {
+        handleAct(target);
+        return;
+      }
 
       if (target.hasAttribute("data-view")) {
         setView(target.getAttribute("data-view"));
@@ -1100,9 +1366,13 @@
 
       if (target.id === "reset-checks") {
         localChecks = {};
+        localActions = {};
+        localDrafts = {};
         writeStore();
+        writeMap(ACT_KEY, localActions);
+        writeMap(DRAFT_KEY, localDrafts);
         renderTrackView();
-        toast("내 체크를 초기화했습니다");
+        toast("내 체크·완료 표시·입력 초안을 초기화했습니다");
         return;
       }
       if (target.hasAttribute("data-back")) {
@@ -1183,6 +1453,7 @@
     });
 
     document.addEventListener("keydown", function (event) {
+      if (event.target.closest && event.target.closest("[data-act]")) return;
       var card = event.target.closest && event.target.closest("[data-open]");
       if (card && (event.key === "Enter" || event.key === " ")) {
         event.preventDefault();
@@ -1222,6 +1493,16 @@
       refreshCounts(trackId);
       renderProgress();
       renderPicker();
+    });
+
+    document.addEventListener("input", function (event) {
+      var input = event.target;
+      if (!input || !input.hasAttribute || !input.hasAttribute("data-answer")) return;
+      var key = input.getAttribute("data-answer");
+      var value = input.value || "";
+      if (value) localDrafts[key] = value;
+      else delete localDrafts[key];
+      writeMap(DRAFT_KEY, localDrafts);
     });
 
     var skillSearch = el("skill-search");

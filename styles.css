@@ -1820,3 +1820,255 @@ code.path {
 @media print {
   .track-picker, .picker-hint, .ov-cta, .back-btn { display: none; }
 }
+
+/* =========================================================
+   v4 — 대기 항목 클릭 액션 카드
+   추적 항목(.titem)·미결 사항(.qitem)을 누르면 아래에
+   실행 문구 복사 / 답변 입력 / 링크 열기 / 완료 표시 패널이 열립니다.
+   ========================================================= */
+
+.dsec-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-mute);
+}
+
+/* ---- 추적 항목 카드 ---- */
+.titem { padding: 0; overflow: hidden; }
+
+.titem-tap {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 11px 9px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.titem-tap:hover { background: rgba(255, 255, 255, 0.04); }
+.titem-tap:active { background: rgba(255, 255, 255, 0.075); }
+.titem-tap:focus-visible { outline: 2px solid rgba(160, 190, 255, 0.75); outline-offset: -2px; }
+
+.titem.open {
+  border-color: color-mix(in srgb, var(--tone) 45%, var(--line));
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 10px 26px -18px rgba(0, 0, 0, 0.95);
+}
+.titem.is-done { opacity: 0.6; }
+.titem.is-done .titem-title { text-decoration: line-through; text-decoration-thickness: 1px; }
+
+/* 액션 힌트 (누르면 진행 →) */
+.titem-cta,
+.q-cta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 750;
+  color: #a9c4ff;
+  letter-spacing: -0.01em;
+}
+.cta-lead {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--tone, #5b8cff);
+  background: color-mix(in srgb, var(--tone, #5b8cff) 16%, transparent);
+  border-radius: 999px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+.cta-label { color: #dbe6ff; }
+.cta-arrow { margin-left: auto; opacity: 0.85; }
+
+/* ---- 미결 확인 사항 카드 ---- */
+.qitem {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.qitem:hover { border-color: rgba(255, 255, 255, 0.2); }
+
+.qitem-tap {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 3px 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.qitem-tap:hover { background: rgba(255, 255, 255, 0.04); }
+.qitem-tap:focus-visible { outline: 2px solid rgba(160, 190, 255, 0.75); outline-offset: -2px; }
+.qitem-tap .q-who { grid-column: 1; grid-row: 1; justify-self: start; }
+.qitem-tap .q-due { grid-column: 2; grid-row: 1; justify-self: end; }
+.qitem-tap .q-text { grid-column: 1 / -1; grid-row: 2; }
+.qitem-tap .q-cta { grid-column: 1 / -1; grid-row: 3; justify-self: stretch; margin-top: 2px; }
+
+.qitem.open { border-style: solid; border-color: rgba(160, 190, 255, 0.42); background: rgba(255, 255, 255, 0.05); }
+.qitem.is-done { opacity: 0.6; }
+.qitem.is-done .q-text { text-decoration: line-through; text-decoration-thickness: 1px; }
+
+/* ---- 액션 패널(아코디언) ---- */
+.action-panel {
+  display: grid;
+  gap: 8px;
+  margin: 0 10px 10px;
+  padding: 10px;
+  border-radius: 11px;
+  border: 1px solid color-mix(in srgb, var(--tone, #5b8cff) 30%, var(--line));
+  background: rgba(0, 0, 0, 0.34);
+  animation: apIn 0.16s ease-out;
+}
+.action-panel[hidden] { display: none; }
+
+@keyframes apIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.ap-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ap-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #a9c4ff;
+}
+.ap-step { font-size: 10.5px; color: var(--text-mute); }
+
+.ap-prompt {
+  margin: 0;
+  padding: 8px 9px;
+  font-size: 11.8px;
+  line-height: 1.5;
+  color: #dbe6ff;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px dashed var(--line);
+  border-radius: 9px;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.ap-field { display: grid; gap: 4px; }
+.ap-field-k { font-size: 10px; font-weight: 750; color: var(--text-mute); }
+
+.ap-input {
+  width: 100%;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 10px;
+  appearance: none;
+}
+.ap-input::placeholder { color: #6f7889; }
+.ap-input:focus {
+  outline: none;
+  border-color: rgba(160, 190, 255, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.16);
+}
+
+.ap-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.ap-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: inherit;
+  font-size: 11.8px;
+  font-weight: 750;
+  color: var(--text);
+  text-decoration: none;
+  padding: 7px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.ap-btn:hover { background: rgba(255, 255, 255, 0.1); }
+.ap-btn:active { transform: scale(0.97); }
+.ap-btn:focus-visible { outline: 2px solid rgba(160, 190, 255, 0.8); outline-offset: 1px; }
+
+.ap-btn.primary {
+  border-color: color-mix(in srgb, var(--tone, #5b8cff) 58%, var(--line));
+  background: color-mix(in srgb, var(--tone, #5b8cff) 22%, rgba(255, 255, 255, 0.03));
+  color: #eff4ff;
+}
+.ap-btn.primary:hover { background: color-mix(in srgb, var(--tone, #5b8cff) 32%, rgba(255, 255, 255, 0.04)); }
+.ap-btn.ghost { color: var(--text-dim); }
+.ap-btn.done { margin-left: auto; color: var(--text-mute); }
+.ap-btn.done.on { color: var(--ok); border-color: rgba(55, 211, 154, 0.45); background: rgba(55, 211, 154, 0.12); }
+
+/* ---- 트랙 요약 카드 안의 항목 버튼 ---- */
+.ov-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 3px 5px;
+  margin: 0 -5px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 11.8px;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ov-item:hover { background: rgba(255, 255, 255, 0.07); }
+.ov-item:active { background: rgba(255, 255, 255, 0.11); }
+.ov-item:focus-visible { outline: 2px solid rgba(160, 190, 255, 0.8); outline-offset: 0; }
+.ov-item-go { flex: 0 0 auto; font-size: 11px; color: var(--accent); opacity: 0.9; }
+
+/* ---- 알림 카드의 지금 처리 버튼 ---- */
+.alert-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 7px;
+  margin-right: 6px;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #06121f;
+  background: linear-gradient(180deg, #d7e5ff, #a9c4ff);
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+.alert-act:hover { filter: brightness(1.06); }
+.alert-act:active { transform: scale(0.97); }
+.alert-act:focus-visible { outline: 2px solid rgba(160, 190, 255, 0.9); outline-offset: 2px; }
+
+@media (max-width: 620px) {
+  .ap-actions .ap-btn { flex: 1 1 auto; justify-content: center; }
+  .ap-btn.done { margin-left: 0; }
+  .action-panel { margin: 0 7px 8px; padding: 9px; }
+  .titem-cta, .q-cta { font-size: 10.8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-panel { animation: none; }
+}

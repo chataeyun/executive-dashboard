@@ -1,12 +1,12 @@
 {
   "meta": {
     "title": "AI 비서실 통합 관제탑",
-    "subtitle": "7개 트랙 · 실제 추적 항목 연동",
-    "generated_at": "2026-11-18T15:35:00+09:00",
+    "subtitle": "7개 트랙 · 카드 눌러 바로 진행",
+    "generated_at": "2026-11-18T15:28:47+09:00",
     "timezone": "Asia/Seoul",
-    "schema": 2,
+    "schema": 3,
     "visibility": "public",
-    "guide": "트랙 버튼을 누르면 그 트랙의 추적 대상·미결 사항·실행 버튼이 바로 열립니다.",
+    "guide": "트랙 버튼을 누르면 그 트랙의 추적 대상·미결 사항이 열리고, 카드를 누르면 실행·회신 문구 복사, 답변 입력, 완료 표시 패널이 바로 열립니다.",
     "privacy_notice": "공개 배포용 화면입니다. 실명·회사·연락처·거주 단지명·동호수·층·금액 원문은 담지 않습니다.",
     "storage_note": "회사 업무 원문과 가계부·자산 원본은 개인 드라이브·로컬 워커 폴더에 분리 보관하고, 이 화면에는 추적 항목·상태·체크리스트만 표시합니다."
   },
@@ -29,31 +29,36 @@
       "track": "content",
       "level": "warn",
       "title": "인스타 계정 인증 대기",
-      "text": "@gyeongnam.note에 '사람임을 확인하세요' 체크포인트가 걸려 4:5 교체가 멈춰 있습니다. 아이폰 인스타 앱에서 인증하면 1~2번 카드부터 재개됩니다. 180일 안에 인증하지 않으면 계정이 비활성화됩니다."
+      "text": "@gyeongnam.note에 '사람임을 확인하세요' 체크포인트가 걸려 4:5 교체가 멈춰 있습니다. 아이폰 인스타 앱에서 인증하면 1~2번 카드부터 재개됩니다. 180일 안에 인증하지 않으면 계정이 비활성화됩니다.",
+      "item": "insta-auth"
     },
     {
       "track": "realestate",
       "level": "info",
       "title": "주담대 조건 4가지 회신 대기",
-      "text": "금리·은행·월 원리금·상환방식(만기)을 알려주시면 대환 여지 점검이 시작됩니다. 다음 정기 점검은 12/15 10:00입니다."
+      "text": "금리·은행·월 원리금·상환방식(만기)을 알려주시면 대환 여지 점검이 시작됩니다. 다음 정기 점검은 12/15 10:00입니다.",
+      "item": "rq-mortgage"
     },
     {
       "track": "study",
       "level": "info",
       "title": "Day 1 기출 답안 대기",
-      "text": "11/16에 낸 26회 1차 3·4번 답안이 아직 없습니다. 회신하면 채점·오답 기록 후 오늘 20:15에 다음 2문항을 냅니다."
+      "text": "11/16에 낸 26회 1차 3·4번 답안이 아직 없습니다. 회신하면 채점·오답 기록 후 오늘 20:15에 다음 2문항을 냅니다.",
+      "item": "day1"
     },
     {
       "track": "prizes",
       "level": "info",
       "title": "오늘 발표 확인 남음",
-      "text": "동대문구 보건소 발표가 아직 게시되지 않아 저녁 6시에 재확인합니다. SSG FRIN은 11/19 10:00 발표입니다."
+      "text": "동대문구 보건소 발표가 아직 게시되지 않아 저녁 6시에 재확인합니다. SSG FRIN은 11/19 10:00 발표입니다.",
+      "item": "ddm"
     },
     {
       "track": "money",
       "level": "info",
       "title": "가계부 단축어 테스트 대기",
-      "text": "아이폰 [가계부] 단축어로 보낸 테스트 메일 수신이 아직 확인되지 않았습니다."
+      "text": "아이폰 [가계부] 단축어로 보낸 테스트 메일 수신이 아직 확인되지 않았습니다.",
+      "item": "shortcut"
     }
   ],
   "tracks": [
@@ -83,7 +88,11 @@
           "criteria": "격주 판정(매수·매도·Hold)을 토 09:00에 텔레그램으로. 이번 주 판정은 Hold로 기록",
           "status": "재조회 대기",
           "tone": "wait",
-          "next": "11/21(토) 09:00 다음 판정"
+          "next": "11/21(토) 09:00 다음 판정",
+          "action_label": "지금 VR 판정 조회",
+          "action_prompt": "TQQQ VR 5.0.3 이번 주 판정(매수·매도·Hold)을 지금 다시 조회해서 텔레그램으로 보내줘. 240주차 격주 적립식 기준이야.",
+          "action_url": "https://finance.yahoo.com/quote/TQQQ",
+          "action_url_label": "TQQQ 시세 열기"
         },
         {
           "id": "watch-30",
@@ -93,7 +102,11 @@
           "criteria": "평일 15:40 장마감 발송 · ±5% 급변동 종목은 사유까지 3줄로",
           "status": "가동 중",
           "tone": "ok",
-          "next": "오늘 15:40"
+          "next": "오늘 15:40",
+          "action_label": "지금 30선 조회",
+          "action_prompt": "관심종목 32종목(국내 25 + 미국 7) 지금 시세와 등락률 조회해서 ±5% 급변동 종목만 사유 3줄로 보내줘.",
+          "action_url": "https://finance.naver.com/",
+          "action_url_label": "네이버 금융 열기"
         },
         {
           "id": "market-snap",
@@ -103,7 +116,11 @@
           "criteria": "5,000선 이탈 여부와 수급(외국인 순매도 규모) 추적",
           "status": "기록 완료",
           "tone": "info",
-          "next": "오늘 15:40 갱신"
+          "next": "오늘 15:40 갱신",
+          "action_label": "지금 시세 갱신",
+          "action_prompt": "코스피·코스닥·원/달러 최신 마감 수치와 외국인 순매매 규모 지금 조회해서 스냅샷 갱신해줘.",
+          "action_url": "https://finance.naver.com/",
+          "action_url_label": "네이버 금융 열기"
         },
         {
           "id": "week-event",
@@ -113,24 +130,40 @@
           "criteria": "결과가 30선 반도체·성장주 판단에 미치는 영향을 브리핑에 반영",
           "status": "관전",
           "tone": "info",
-          "next": "11/19(목) 장마감 브리핑"
+          "next": "11/19(목) 장마감 브리핑",
+          "action_label": "영향 정리 요청",
+          "action_prompt": "엔비디아 실적과 앤트로픽 상장 결과가 30선 반도체·성장주 판단에 미치는 영향 정리해서 다음 브리핑에 반영해줘."
         }
       ],
       "open_questions": [
         {
           "text": "두산에너빌리티 52주 최저가 재시험 — 보유 관점 코멘트를 계속 낼지",
           "who": "user",
-          "due": "다음 브리핑 때까지"
+          "due": "다음 브리핑 때까지",
+          "id": "dq-doosan",
+          "action_title": "두산에너빌리티 보유 코멘트",
+          "action_label": "답변 입력·복사",
+          "input_placeholder": "예) 계속 내줘 / 급락 사유만 / 빼줘",
+          "action_prompt": "두산에너빌리티 보유 관점 코멘트는 계속 브리핑에 넣어줘."
         },
         {
           "text": "11/16 리포트 원/달러 1,335.80 소급 정정 여부",
           "who": "user",
-          "due": "다음 리포트 전"
+          "due": "다음 리포트 전",
+          "id": "dq-fx",
+          "action_title": "원/달러 소급 정정",
+          "action_label": "답변 입력·복사",
+          "input_placeholder": "예) 정정해줘 / 그냥 둬",
+          "action_prompt": "11/16 리포트 원/달러 1,335.80 표기는 소급 정정해줘."
         },
         {
           "text": "32종목 최근 4주 등락·거래량 백테스트 표 작성",
           "who": "sub",
-          "due": "이번 주"
+          "due": "이번 주",
+          "id": "dq-backtest",
+          "action_title": "32종목 백테스트 표",
+          "action_label": "워커 작업 지시",
+          "action_prompt": "관심종목 32종목 최근 4주 등락률·거래량 백테스트 표를 만들어 워커 출력 폴더에 저장해줘."
         }
       ],
       "schedule": [
@@ -243,7 +276,11 @@
           "criteria": "최근 실거래 64,000~76,000만 원(중위 67,000만 원) · 직전 3개월 평균 대비 ±5% 변동 시 보고",
           "status": "추적 중",
           "tone": "ok",
-          "next": "11/21(토) 10:00 정기 조회"
+          "next": "11/21(토) 10:00 정기 조회",
+          "action_label": "지금 실거래 조회",
+          "action_prompt": "진주 역세권 84A(전용 84㎡) 최근 실거래 지금 조회해서 직전 확인 대비 변동만 알려줘.",
+          "action_url": "https://rt.molit.go.kr/",
+          "action_url_label": "국토부 실거래가 열기"
         },
         {
           "id": "switch-aw",
@@ -253,7 +290,11 @@
           "criteria": "분양권 실거래 57,300~62,500만 원 · 56,500만 원 이하 급매가 나오면 즉시 보고",
           "status": "감시 중",
           "tone": "wait",
-          "next": "11/21(토) 10:00"
+          "next": "11/21(토) 10:00",
+          "action_label": "급매 지금 조회",
+          "action_prompt": "진주 아너스웰가진주 84A 분양권 실거래와 급매 지금 조회해줘. 56,500만 원 이하로 내려온 매물 있으면 바로 알려줘.",
+          "action_url": "https://land.naver.com/",
+          "action_url_label": "네이버 부동산 열기"
         },
         {
           "id": "target-mj",
@@ -263,7 +304,11 @@
           "criteria": "매매 55,000만 원 이하 급매 또는 실투자 갭 22,000만 원 이하 진입 시 즉시 보고",
           "status": "감시 중",
           "tone": "wait",
-          "next": "11/21(토) 10:00"
+          "next": "11/21(토) 10:00",
+          "action_label": "명지 시세 조회",
+          "action_prompt": "부산 명지 더샵퍼스트월드 2단지 84㎡ 매매·전세 지금 조회해서 갭 계산해줘. 55,000만 원 이하나 갭 22,000만 원 이하 나오면 바로 알려줘.",
+          "action_url": "https://land.naver.com/",
+          "action_url_label": "네이버 부동산 열기"
         },
         {
           "id": "mj-boost",
@@ -273,7 +318,9 @@
           "criteria": "착공·개교·개원 공지가 확인되면 가격 기준선과 함께 보고",
           "status": "추적 중",
           "tone": "info",
-          "next": "11/21(토)"
+          "next": "11/21(토)",
+          "action_label": "호재 진척 확인",
+          "action_prompt": "명지 하단녹산선·로얄러셀스쿨·병원 착공·개교·개원 공지 새로 뜬 것 있는지 지금 확인해줘."
         },
         {
           "id": "rank-jinju",
@@ -283,24 +330,42 @@
           "criteria": "서열·가격 역전 신호가 나오면 갈아타기 판단 메모를 갱신",
           "status": "기준 확정",
           "tone": "info",
-          "next": "12/28 순자산표 때 재확인"
+          "next": "12/28 순자산표 때 재확인",
+          "action_label": "서열 재점검",
+          "action_prompt": "진주 단지 서열(중흥S클래스 더퍼스트·우미린 더시그니처·보유 84A)과 시세 역전 신호 지금 다시 점검해줘.",
+          "action_url": "https://rt.molit.go.kr/",
+          "action_url_label": "국토부 실거래가 열기"
         }
       ],
       "open_questions": [
         {
           "text": "주담대 4가지 조건 회신 대기 — 금리(%), 은행, 월 원리금, 상환방식·만기",
           "who": "user",
-          "due": "12/15 10:00 금리 점검 전"
+          "due": "12/15 10:00 금리 점검 전",
+          "id": "rq-mortgage",
+          "action_title": "주담대 4가지 조건",
+          "action_label": "답변 입력·복사",
+          "input_placeholder": "예) 하나은행 / 4.1% / 월 원리금 OO만 원 / 원리금균등 30년",
+          "action_prompt": "주담대 조건 템플릿: OO은행 / 금리 O.O% / 월 원리금 OO만 원 / 상환방식 OO·만기 OO년"
         },
         {
           "text": "첫 정기 리포트(11/21 10:00)를 받은 뒤 목표가 기준선을 그대로 둘지 판단",
           "who": "user",
-          "due": "11/21"
+          "due": "11/21",
+          "id": "rq-baseline",
+          "action_title": "목표가 기준선 유지 판단",
+          "action_label": "답변 입력·복사",
+          "input_placeholder": "예) 기준선 그대로 / 조정 필요",
+          "action_prompt": "첫 정기 리포트 본 뒤에도 목표가 기준선은 그대로 두는 걸로 할게."
         },
         {
           "text": "관심 3곳 최근 6개월 실거래 비교 표 작성",
           "who": "sub",
-          "due": "첫 리포트 전"
+          "due": "첫 리포트 전",
+          "id": "rq-table",
+          "action_title": "관심 3곳 실거래 비교 표",
+          "action_label": "워커 작업 지시",
+          "action_prompt": "관심 3곳(보유 84A·아너스웰가진주·명지 더샵퍼스트월드) 최근 6개월 실거래 비교 표 만들어줘. 동·호수·층은 빼고."
         }
       ],
       "schedule": [
@@ -389,7 +454,7 @@
       "tagline": "체험단 계정 키우기",
       "status": "blocked",
       "accent": "#ff7a9c",
-      "summary": "블로그 10편 중 9편 보완 완료(10번 거제 1박2일 마무리 중). 인스타 4:5 교체는 계정 인증에서 멈춰 있습니다.",
+      "summary": "블로그 10편 보완 완료(10/10). 인스타 4:5 교체는 계정 인증에서 멈춰 있습니다.",
       "next_run": {
         "at": "2026-11-18T17:30:00+09:00",
         "label": "인스타 교체 4회차(인증 후 재개)"
@@ -403,11 +468,15 @@
           "id": "blog-10",
           "kind": "블로그",
           "title": "네이버 블로그 10편 보완",
-          "detail": "1~9편 반영 완료 · 10번 '거제 1박2일 코스' 작성 중",
+          "detail": "1~10편 반영 완료 · 10번 '거제 1박2일 코스' 포함",
           "criteria": "본문·지도·주소·제목 보완 + 비식별 9항목 준수",
-          "status": "진행 중",
-          "tone": "wait",
-          "next": "10번 업로드 전 승인"
+          "status": "완료 (10/10)",
+          "tone": "ok",
+          "next": "화·금 19:00 자동 발행",
+          "action_label": "10편 점검 요청",
+          "action_prompt": "블로그 10편 보완 상태 다시 점검해서 빠진 지도·주소·제목 있으면 알려줘.",
+          "action_url": "https://blog.naver.com/boxsheel",
+          "action_url_label": "블로그 열기"
         },
         {
           "id": "insta-swap",
@@ -417,7 +486,11 @@
           "criteria": "회차당 최대 2건 · 30~60초 간격 · 사전 승인 후 업로드",
           "status": "인증 대기(중단)",
           "tone": "warn",
-          "next": "인증 즉시 재개"
+          "next": "인증 즉시 재개",
+          "action_label": "인증 후 재개",
+          "action_prompt": "인스타 계정 인증 완료했어! @gyeongnam.note 1~2번 새 카드 업로드 재개해 줘.",
+          "action_url": "https://www.instagram.com/gyeongnam.note/",
+          "action_url_label": "인스타 프로필 열기"
         },
         {
           "id": "insta-auth",
@@ -427,7 +500,11 @@
           "criteria": "180일 내 미인증 시 계정 비활성화",
           "status": "내 확인 필요",
           "tone": "warn",
-          "next": "인증 후 1~2번부터"
+          "next": "인증 후 1~2번부터",
+          "action_label": "인증 완료 후 재개",
+          "action_prompt": "인스타 @gyeongnam.note 인증 완료했어. 180일 카운트 넘어갔는지 확인하고 3~10번 교체 이어서 진행해 줘.",
+          "action_url": "https://www.instagram.com/gyeongnam.note/",
+          "action_url_label": "인스타 프로필 열기"
         },
         {
           "id": "bench",
@@ -437,24 +514,33 @@
           "criteria": "일련번호(EP.01)와 획일적 양식 반복 금지 · 새 시안은 사전 승인",
           "status": "적용 중",
           "tone": "ok",
-          "next": "상시"
+          "next": "상시",
+          "action_label": "규칙 재점검",
+          "action_prompt": "벤치마킹 반영 규칙(해시태그 5개 이하·4:5·짧은 문단·이모티콘 2~3개) 최신 인기 계정 사례로 다시 점검해줘."
         }
       ],
       "open_questions": [
         {
           "text": "인스타 앱 인증 완료 여부(직접 인증 필요)",
           "who": "user",
-          "due": "오늘 안"
-        },
-        {
-          "text": "10번 거제 1박2일 글 최종 승인",
-          "who": "user",
-          "due": "업로드 전"
+          "due": "오늘 안",
+          "id": "cq-insta-auth",
+          "action_title": "인스타 앱 인증 완료 여부",
+          "action_label": "답변 입력·복사",
+          "input_placeholder": "예) 인증 완료했어",
+          "action_prompt": "인스타 앱 인증 완료했어. 이제 새 카드 업로드 재개해 줘.",
+          "action_url": "https://www.instagram.com/gyeongnam.note/",
+          "action_url_label": "인스타 열기"
         },
         {
           "text": "3~10번 새 카드 시안 승인 유지 여부",
           "who": "user",
-          "due": "3회차 재개 전"
+          "due": "3회차 재개 전",
+          "id": "cq-cards",
+          "action_title": "3~10번 새 카드 시안 승인",
+          "action_label": "답변 입력·복사",
+          "input_placeholder": "예) 시안 그대로 진행",
+          "action_prompt": "3~10번 새 카드 시안은 그대로 진행해."
         }
       ],
       "schedule": [
@@ -514,8 +600,8 @@
         },
         {
           "id": "blog-2nd",
-          "text": "블로그 2차 5편 보완(9편 완료 · 10번 진행)",
-          "done": false,
+          "text": "블로그 2차 5편 보완(10편 전체 완료)",
+          "done": true,
           "role": "main"
         },
         {
@@ -539,7 +625,7 @@
         "main": "✍️ 콘텐츠 트랙 실행: 블로그 10번(거제 1박2일) 마무리하고, 인스타 인증이 풀렸는지 확인해서 4:5 교체 3~10번을 이어서 진행해줘. 새 카드는 올리기 전에 먼저 보여줘.",
         "sub": "콘텐츠 워커 지시: 4:5 카드 2종을 기존과 다른 양식(지도형·체크리스트형 혼합)으로 제작하고, 10번 글 지도·주소를 보완해줘."
       },
-      "note": "인스타는 계정 인증 전까지 업로드·삭제 모두 중단. 남은 카드와 캡션은 준비 완료 상태입니다."
+      "note": "블로그 10편은 마무리됐습니다. 인스타는 계정 인증 전까지 업로드·삭제 모두 중단. 남은 카드와 캡션은 준비 완료 상태입니다."
     },
     {
       "id": "prizes",
@@ -567,7 +653,9 @@
           "criteria": "발표일 10:00 자동 확인 · 당첨 시 대장과 수익 기록 갱신",
           "status": "진행 중",
           "tone": "ok",
-          "next": "매일 08:30 큐레이션"
+          "next": "매일 08:30 큐레이션",
+          "action_label": "대장 점검",
+          "action_prompt": "응모 대장 15건 지금 점검해서 발표일 지난 건 당첨 여부 확인하고 대장 갱신해줘."
         },
         {
           "id": "announce-6",
@@ -577,7 +665,11 @@
           "criteria": "발표일 10:00 확인, 당첨 시 즉시 알림",
           "status": "추적 중",
           "tone": "wait",
-          "next": "11/19(목) 10:00 SSG"
+          "next": "11/19(목) 10:00 SSG",
+          "action_label": "지금 발표 확인",
+          "action_prompt": "이번 주 발표 대기 6건(SSG FRIN·육아ON·하남시청·관악구청·다누리·내손안에서울) 지금 한 번 확인해서 알려줘.",
+          "action_url": "https://www.supertoday.co.kr/",
+          "action_url_label": "슈퍼투데이 열기"
         },
         {
           "id": "ddm",
@@ -587,7 +679,9 @@
           "criteria": "카카오톡 채널 게시 확인(지난 회차는 오후 늦게 게시)",
           "status": "저녁 재확인",
           "tone": "warn",
-          "next": "오늘 18:00"
+          "next": "오늘 18:00",
+          "action_label": "당첨 발표 확인",
+          "action_prompt": "동대문구 보건소 당첨 발표 지금 바로 확인해 줘."
         },
         {
           "id": "musinsa",
@@ -597,7 +691,9 @@
           "criteria": "로그인 후 신청내역 + 메일 알림 확인",
           "status": "재확인 대기",
           "tone": "warn",
-          "next": "로그인 되면 즉시"
+          "next": "로그인 되면 즉시",
+          "action_label": "신청내역 재확인",
+          "action_prompt": "무신사 체험단(휠라 니트 장갑) 신청내역 지금 다시 확인해줘. 로그인이 막히면 앱에서 내가 직접 볼게."
         },
         {
           "id": "webform",
@@ -607,24 +703,39 @@
           "criteria": "개인정보 최소 항목만 · 3분 이내 건 우선",
           "status": "대행 대기",
           "tone": "wait",
-          "next": "오늘"
+          "next": "오늘",
+          "action_label": "1~4번 대행 진행",
+          "action_prompt": "큐레이션 웹폼 1~4번 지금 대행 응모 진행해줘."
         }
       ],
       "open_questions": [
         {
           "text": "무신사 로그인(카카오) 로딩 실패 — 앱에서 직접 확인하실지",
           "who": "user",
-          "due": "오늘"
+          "due": "오늘",
+          "id": "pq-musinsa",
+          "action_title": "무신사 로그인 확인",
+          "action_label": "답변 입력·복사",
+          "input_placeholder": "예) 앱에서 확인할게 / 다시 시도해줘",
+          "action_prompt": "무신사는 내가 앱에서 직접 확인할게. 다른 응모 먼저 진행해 줘."
         },
         {
           "text": "큐레이션 웹폼 1~4번 오늘 대행 진행",
           "who": "main",
-          "due": "오늘"
+          "due": "오늘",
+          "id": "pq-webform",
+          "action_title": "웹폼 1~4번 대행",
+          "action_label": "대행 진행 요청",
+          "action_prompt": "큐레이션 웹폼 1~4번 오늘 대행 진행해."
         },
         {
           "text": "동대문구 발표 저녁 6시 재확인",
           "who": "main",
-          "due": "오늘 18:00"
+          "due": "오늘 18:00",
+          "id": "pq-ddm",
+          "action_title": "동대문구 저녁 재확인",
+          "action_label": "재확인 요청",
+          "action_prompt": "동대문구 발표 저녁 6시에 다시 확인해서 알려줘."
         }
       ],
       "schedule": [
@@ -739,7 +850,9 @@
           "criteria": "설비별 제원 + 정비 이력 + 교체 주기 필드",
           "status": "스키마 확정 대기",
           "tone": "wait",
-          "next": "워커 산출물 검토"
+          "next": "워커 산출물 검토",
+          "action_label": "스키마 초안 요청",
+          "action_prompt": "설비 3종(공기압축기·용수펌프·스팀보일러) 제원·정비이력 DB 스키마 초안 만들어서 비공개 폴더에 저장해줘."
         },
         {
           "id": "report",
@@ -749,7 +862,9 @@
           "criteria": "비식별 유지 — 회사명·사내메일 주소는 화면과 초안에 남기지 않음",
           "status": "초안 전",
           "tone": "wait",
-          "next": "이번 주"
+          "next": "이번 주",
+          "action_label": "보고서 초안 요청",
+          "action_prompt": "월간 경상정비 보고서 초안 틀(목차·표 서식) 만들어줘. 회사명·사내메일 주소는 빼고."
         },
         {
           "id": "mail",
@@ -759,7 +874,9 @@
           "criteria": "비식별 유지 · 원문은 비공개 폴더에만",
           "status": "작성 전",
           "tone": "wait",
-          "next": "이번 주"
+          "next": "이번 주",
+          "action_label": "메일 초안 요청",
+          "action_prompt": "반복 문의용 사내 메일 초안 3종 작성해줘. 비식별 유지하고."
         },
         {
           "id": "privacy",
@@ -769,19 +886,31 @@
           "criteria": "설비 원문·사진·회사명 노출 금지",
           "status": "적용 중",
           "tone": "ok",
-          "next": "상시"
+          "next": "상시",
+          "action_label": "비식별 점검",
+          "action_prompt": "관제탑 화면과 데이터에 비식별 안 된 값 섞였는지 지금 한 번 점검해줘."
         }
       ],
       "open_questions": [
         {
           "text": "월간 보고서 초안 틀(목차·표 서식) 확정",
           "who": "main",
-          "due": "이번 주"
+          "due": "이번 주",
+          "id": "wq-report-tpl",
+          "action_title": "보고서 초안 틀 확정",
+          "action_label": "확정 요청",
+          "input_placeholder": "예) 이 틀대로 진행",
+          "action_prompt": "월간 보고서 초안 틀(목차·표 서식) 이대로 확정하고 작성 시작해."
         },
         {
           "text": "설비 제원표 최신본 반영 범위(정비 이력 누락 방지)",
           "who": "main",
-          "due": "DB 스키마 확정 전"
+          "due": "DB 스키마 확정 전",
+          "id": "wq-spec-scope",
+          "action_title": "제원표 반영 범위",
+          "action_label": "확정 요청",
+          "input_placeholder": "예) 정비 이력까지 전부",
+          "action_prompt": "설비 제원표는 최신본 기준으로 정비 이력까지 전부 반영해줘."
         }
       ],
       "schedule": [
@@ -880,7 +1009,9 @@
           "criteria": "매일 20:15 기출 2문항 + 오답 누적, 주말 복습 재출제",
           "status": "진행 중",
           "tone": "ok",
-          "next": "오늘 20:15"
+          "next": "오늘 20:15",
+          "action_label": "오늘 2문항 받기",
+          "action_prompt": "52주 커리큘럼 1주차 오늘 기출 2문항 지금 내줘."
         },
         {
           "id": "day1",
@@ -890,7 +1021,11 @@
           "criteria": "답안 회신 시 즉시 채점·해설 → 오답 유형을 notes에 기록",
           "status": "답안 대기",
           "tone": "warn",
-          "next": "회신 즉시 · 오늘 20:15 다음 2문항"
+          "next": "회신 즉시 · 오늘 20:15 다음 2문항",
+          "action_label": "답안 입력·복사",
+          "input_label": "답안",
+          "input_placeholder": "예) 3번 ④, 4번 ④",
+          "action_prompt": "26회 1차 3·4번 답안 채점하고 오답 유형 notes에 기록한 뒤 20:15에 다음 2문항 내줘."
         },
         {
           "id": "ffm",
@@ -899,7 +1034,9 @@
           "detail": "1차 1,920 + 2차 250문항",
           "criteria": "휴대폰에서 바로 열림 · 회차·과목별 풀이",
           "status": "배포 완료",
-          "tone": "ok"
+          "tone": "ok",
+          "action_label": "오늘 풀이 범위",
+          "action_prompt": "소방시설관리사 기출 웹앱에서 오늘 풀 범위(1주차 1과목) 회차·문항 정해줘."
         },
         {
           "id": "fpe",
@@ -908,7 +1045,9 @@
           "detail": "필기 5,600 + 실기 1,046문항",
           "criteria": "서술형 답안 틀 길라잡이 포함",
           "status": "배포 완료",
-          "tone": "ok"
+          "tone": "ok",
+          "action_label": "오늘 풀이 범위",
+          "action_prompt": "소방설비기사(전기) 실기 서술형 답안 틀 오늘 볼 범위 정해줘."
         },
         {
           "id": "pdf",
@@ -917,24 +1056,41 @@
           "detail": "195쪽 · 176쪽",
           "criteria": "서술 틀·가지치기 연상 구조 유지",
           "status": "완료",
-          "tone": "ok"
+          "tone": "ok",
+          "action_label": "출력본 확인",
+          "action_prompt": "출력용 가지치기 PDF 2종 최신본인지 확인해서 파일 위치 알려줘."
         }
       ],
       "open_questions": [
         {
           "text": "Day 1(26회 1차 3·4번) 답안 미회신 — 채점·오답 기록 대기",
           "who": "user",
-          "due": "오늘"
+          "due": "오늘",
+          "id": "sq-day1",
+          "action_title": "소방 Day 1 답안",
+          "action_label": "답안 입력·복사",
+          "input_label": "답안",
+          "input_placeholder": "예) 3번 ④, 4번 ④",
+          "action_prompt": "소방 Day 1 답안 채점해서 오답 정리해 줘."
         },
         {
           "text": "1주차 오답 노트 정리 시점(주말 복습)",
           "who": "main",
-          "due": "토요일"
+          "due": "토요일",
+          "id": "sq-wrongnote",
+          "action_title": "1주차 오답 노트 정리 시점",
+          "action_label": "일정 확정",
+          "input_placeholder": "예) 토요일 오전",
+          "action_prompt": "1주차 오답 노트는 토요일 오전에 정리하는 걸로 할게."
         },
         {
           "text": "소방설비기사 실기 문항 추가 수집 범위",
           "who": "sub",
-          "due": "이번 주"
+          "due": "이번 주",
+          "id": "sq-fpe-scope",
+          "action_title": "소방설비기사 실기 수집 범위",
+          "action_label": "워커 작업 지시",
+          "action_prompt": "소방설비기사 실기 문항은 최근 5개년 전부 수집해서 웹앱에 넣어줘."
         }
       ],
       "schedule": [
@@ -1045,7 +1201,9 @@
           "criteria": "80·90·100% 돌파 시 경고 강조, 일일 권장 한도 표시",
           "status": "주의",
           "tone": "warn",
-          "next": "매일 21:30 갱신"
+          "next": "매일 21:30 갱신",
+          "action_label": "예산 점검",
+          "action_prompt": "이번 달 예산 소진 현황과 남은 일일 권장 한도 지금 점검해서 알려줘. 금액은 빼고 비율만."
         },
         {
           "id": "dash0700",
@@ -1055,7 +1213,9 @@
           "criteria": "시트 읽기 쿼터 초과 시 대체경로로 발송",
           "status": "가동 중",
           "tone": "ok",
-          "next": "내일 07:00"
+          "next": "내일 07:00",
+          "action_label": "발송 상태 확인",
+          "action_prompt": "07:00 가계부 대시보드 발송 로그 지금 확인해서 성공·실패만 알려줘."
         },
         {
           "id": "shortcut",
@@ -1065,7 +1225,9 @@
           "criteria": "메일이 오면 지출 자동 기입에 연결",
           "status": "대기",
           "tone": "wait",
-          "next": "메일 도착 시"
+          "next": "메일 도착 시",
+          "action_label": "수신 확인 요청",
+          "action_prompt": "아이폰 [가계부] 단축어 테스트 메일 보냈어, 수신 확인해 줘."
         },
         {
           "id": "insurance",
@@ -1075,7 +1237,9 @@
           "criteria": "납부일을 놓치면 연체 → 월·목 09:30 점검",
           "status": "확인 필요",
           "tone": "warn",
-          "next": "11/19(목) 09:30"
+          "next": "11/19(목) 09:30",
+          "action_label": "납부일 확인",
+          "action_prompt": "보험계약대출 이자 납부일 확인하는 방법 다시 알려줘. 연체 안 되게 챙겨줘."
         },
         {
           "id": "fixed",
@@ -1085,7 +1249,9 @@
           "criteria": "갱신일·결제일 알림, 금액은 화면 비노출",
           "status": "추적 중",
           "tone": "info",
-          "next": "11/23 KT 할인 적용"
+          "next": "11/23 KT 할인 적용",
+          "action_label": "갱신일 점검",
+          "action_prompt": "고정구독·할부 갱신일 지금 점검해서 이번 주 결제 예정만 알려줘."
         },
         {
           "id": "tax",
@@ -1095,24 +1261,40 @@
           "criteria": "11~12월은 혜택 높은 카드 위주 사용 유지",
           "status": "진행 중",
           "tone": "ok",
-          "next": "12월 결산"
+          "next": "12월 결산",
+          "action_label": "환급 상태 확인",
+          "action_prompt": "연말정산 예상 환급 진행 상태와 카드 소득공제 문턱 유지 여부 지금 확인해줘."
         }
       ],
       "open_questions": [
         {
           "text": "지역 민생회복지원금 잔액·사용기한 확인",
           "who": "user",
-          "due": "이번 주"
+          "due": "이번 주",
+          "id": "mq-relief",
+          "action_title": "지역 민생회복지원금",
+          "action_label": "답변 입력·복사",
+          "input_placeholder": "예) 잔액 확인해서 알려줘 / 다 썼어",
+          "action_prompt": "지역 민생회복지원금 잔액과 사용기한 확인해서 알려줘."
         },
         {
           "text": "주담대 월 원리금 — 가계부 고정비에 반영",
           "who": "user",
-          "due": "12/15 점검 전"
+          "due": "12/15 점검 전",
+          "id": "mq-mortgage",
+          "action_title": "주담대 월 원리금 반영",
+          "action_label": "답변 입력·복사",
+          "input_placeholder": "예) 납입일 25일 / 원리금균등",
+          "action_prompt": "주담대 월 원리금 납입일·상환방식 가계부 고정비에 반영해줘."
         },
         {
           "text": "Claude Pro 원화 결제액 확인",
           "who": "main",
-          "due": "이번 주"
+          "due": "이번 주",
+          "id": "mq-claude",
+          "action_title": "Claude Pro 원화 결제액",
+          "action_label": "결제액 확인",
+          "action_prompt": "Claude Pro 원화 결제액 확인해서 알려줘."
         }
       ],
       "schedule": [
