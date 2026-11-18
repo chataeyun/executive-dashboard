@@ -10,6 +10,7 @@
 
   var STORE_KEY = "execdash.v1.checks";
   var VIEW_KEY = "execdash.v2.view";
+  var TRACK_KEY = "execdash.v3.track";
   var TZ = "Asia/Seoul";
   var WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
   var VIEWS = ["tracks", "skills", "brain"];
@@ -321,7 +322,9 @@
     } catch (e) {
       /* 무시 */
     }
-    if (history.replaceState) history.replaceState(null, "", "#" + name);
+    if (history.replaceState) {
+      history.replaceState(null, "", "#" + name + (name === "tracks" && state.track !== "all" ? "/" + state.track : ""));
+    }
 
     if (opts.scroll !== false) {
       var y = scrollMemo[name] || 0;
@@ -350,72 +353,119 @@
     el("overall-meta").textContent = parts.join(" · ");
   }
 
-  function renderFilters() {
+  function statusMeta(track) {
+    return STATUS[track.status] || { label: track.status || "—", cls: "pause", icon: "•" };
+  }
+
+  function trackFacts(track) {
+    return {
+      items: (track.tracking_items || []).length,
+      open: (track.open_questions || []).length
+    };
+  }
+
+  /* 트랙 선택 버튼 — 가로 스크롤 없이 7개(+전체)가 전부 보이는 그리드 */
+  function renderPicker() {
     if (!statusData) return;
-    var trackRow = el("track-filters");
-    var chips = [{ id: "all", label: "전체", icon: "◎", count: statusData.tracks.length }].concat(
+    var host = el("track-filters");
+    if (!host) return;
+    var total = totals();
+    var chips = [
+      {
+        id: "all",
+        icon: "◎",
+        name: "전체 보기",
+        meta: statusData.tracks.length + "개 트랙 · 체크 " + total.done + "/" + total.total,
+        tone: "info",
+        accent: "#9fb6ff"
+      }
+    ].concat(
       statusData.tracks.map(function (t) {
-        return { id: t.id, label: t.name, icon: t.icon, count: t.checklist.length };
+        var f = trackFacts(t);
+        var s = statusMeta(t);
+        return {
+          id: t.id,
+          icon: t.icon,
+          name: t.name,
+          meta: s.label + " · 추적 " + f.items + "건",
+          tone: s.cls,
+          accent: t.accent || "#5b8cff"
+        };
       })
     );
 
-    trackRow.innerHTML = chips
+    host.innerHTML = chips
       .map(function (c) {
-        var selected = state.track === c.id;
+        var on = state.track === c.id;
         return (
-          '<button type="button" class="chip" role="tab" data-track="' + esc(c.id) + '"' +
-          ' aria-selected="' + (selected ? "true" : "false") + '">' +
-          '<span aria-hidden="true">' + esc(c.icon) + "</span>" + esc(c.label) +
-          '<span class="chip-count">' + c.count + "</span>" +
+          '<button type="button" class="tbtn' + (on ? " is-active" : "") + '"' +
+          ' role="tab" data-track="' + esc(c.id) + '" aria-selected="' + (on ? "true" : "false") + '"' +
+          ' style="--accent:' + esc(c.accent) + '">' +
+            '<span class="tbtn-ico" aria-hidden="true">' + esc(c.icon) + "</span>" +
+            '<span class="tbtn-text">' +
+              '<span class="tbtn-name">' + esc(c.name) + "</span>" +
+              '<span class="tbtn-meta"><i class="dot ' + esc(c.tone) + '" aria-hidden="true"></i>' + esc(c.meta) + "</span>" +
+            "</span>" +
           "</button>"
-        );
-      })
-      .join("");
-
-    var roleRow = el("role-filters");
-    var roles = [{ id: "all", label: "담당 전체" }];
-    ["main", "sub"].forEach(function (key) {
-      var r = statusData.roles[key] || {};
-      roles.push({ id: key, label: r.name || key, kind: r.kind || "" });
-    });
-
-    roleRow.innerHTML = roles
-      .map(function (r) {
-        var pressed = state.role === r.id;
-        var count = "";
-        if (r.id !== "all") {
-          var open = 0;
-          statusData.tracks.forEach(function (track) {
-            track.checklist.forEach(function (item) {
-              if ((item.role || "main") === r.id && !isChecked(track, item)) open += 1;
-            });
-          });
-          count = '<span class="chip-count">' + open + "</span>";
-        }
-        return (
-          '<button type="button" class="chip" data-role="' + esc(r.id) + '"' +
-          ' aria-pressed="' + (pressed ? "true" : "false") + '">' + esc(r.label) + count + "</button>"
         );
       })
       .join("");
   }
 
-  function setTrack(id) {
+  function renderFilters() {
+    renderPicker();
+  }
+
+  function setTrack(id, opts) {
+    opts = opts || {};
+    if (id !== "all" && !trackById(id)) id = "all";
     state.track = id;
-    renderFilters();
+    if (id === "all") state.role = "all";
+    try {
+      localStorage.setItem(TRACK_KEY, id);
+    } catch (e) {
+      /* 무시 */
+    }
+    renderPicker();
     renderProgress();
+    renderAlerts();
     renderTracks();
-    if (id !== "all") {
-      var card = document.querySelector('[data-card="' + id + '"]');
-      if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (history.replaceState) {
+      var hash = "#" + state.view + (state.view === "tracks" && id !== "all" ? "/" + id : "");
+      history.replaceState(null, "", hash);
+    }
+    if (id !== "all" && opts.scroll !== false) {
+      var host = el("track-detail");
+      if (host) host.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
 
   function setRole(id) {
     state.role = id;
-    renderFilters();
     renderProgress();
     renderTracks();
+  }
+
+  function renderRoleChips() {
+    var roles = [{ id: "all", label: "담당 전체" }];
+    ["main", "sub"].forEach(function (key) {
+      var r = (statusData.roles || {})[key] || {};
+      roles.push({ id: key, label: r.name || key });
+    });
+    return (
+      '<div class="chip-row chip-row-role" role="group" aria-label="담당 선택">' +
+      roles
+        .map(function (r) {
+          var on = state.role === r.id;
+          return (
+            '<button type="button" class="chip" data-role="' + esc(r.id) + '" aria-pressed="' + (on ? "true" : "false") + '">' +
+            esc(r.label) +
+            "</button>"
+          );
+        })
+        .join("") +
+      "</div>"
+    );
   }
 
   function badge(status) {
@@ -533,65 +583,202 @@
     );
   }
 
-  function renderCard(track) {
+  function renderOverviewCard(track) {
     var s = statsFor(track);
+    var f = trackFacts(track);
+    var st = statusMeta(track);
+    var items = (track.tracking_items || []).slice(0, 3);
+    var nxt = fmtWhen(track.next_run && track.next_run.at, track.next_run && track.next_run.label);
+    return (
+      '<article class="ov-card" data-open="' + esc(track.id) + '"' +
+        ' style="--accent:' + esc(track.accent || "#5b8cff") + '"' +
+        ' tabindex="0" role="button" aria-label="' + esc(track.name) + ' 상세 보기">' +
+        '<div class="ov-head">' +
+          '<span class="ov-ico" aria-hidden="true">' + esc(track.icon) + "</span>" +
+          '<div class="ov-titles">' +
+            '<h3 class="ov-name"><span class="card-no">' + esc(track.no) + "</span>" + esc(track.name) + "</h3>" +
+            '<p class="ov-tag">' + esc(track.tagline || "") + "</p>" +
+          "</div>" +
+          '<span class="badge ' + st.cls + '">' + esc(st.label) + "</span>" +
+        "</div>" +
+        '<p class="ov-summary">' + esc(track.summary || "") + "</p>" +
+        '<ul class="ov-list">' +
+          items
+            .map(function (i) {
+              return (
+                '<li><i class="dot ' + esc(i.tone || "info") + '" aria-hidden="true"></i>' +
+                '<span class="ov-list-name">' + esc(i.title) + "</span>" +
+                '<span class="ov-list-state">' + esc(i.status) + "</span></li>"
+              );
+            })
+            .join("") +
+          (f.items > items.length ? '<li class="ov-more">외 ' + (f.items - items.length) + "건 더 추적 중</li>" : "") +
+        "</ul>" +
+        '<div class="ov-foot">' +
+          '<span class="ov-next">다음 ' + esc(nxt) + "</span>" +
+          '<span class="ov-counts">추적 ' + f.items + " · 미결 " + f.open + "</span>" +
+        "</div>" +
+        '<div class="ov-bar"><span style="width:' + (s.pct || 0) + '%" data-fill-for="' + esc(track.id) + '"></span></div>' +
+        '<span class="ov-cta">상세 보기 <span aria-hidden="true">→</span></span>' +
+      "</article>"
+    );
+  }
+
+  function renderTItem(item) {
+    return (
+      '<li class="titem tone-' + esc(item.tone || "info") + '">' +
+        '<div class="titem-top">' +
+          '<span class="titem-kind">' + esc(item.kind || "항목") + "</span>" +
+          '<h4 class="titem-title">' + esc(item.title) + "</h4>" +
+          '<span class="titem-state">' + esc(item.status) + "</span>" +
+        "</div>" +
+        (item.detail ? '<p class="titem-detail">' + esc(item.detail) + "</p>" : "") +
+        (item.criteria ? '<p class="titem-crit"><span>기준</span>' + esc(item.criteria) + "</p>" : "") +
+        (item.next ? '<p class="titem-next"><span>다음</span>' + esc(item.next) + "</p>" : "") +
+      "</li>"
+    );
+  }
+
+  function whoLabel(who) {
+    if (who === "user") return "내 확인";
+    if (who === "sub") return "워커";
+    return "차차차";
+  }
+
+  function renderDetail(track) {
+    var s = statsFor(track);
+    var f = trackFacts(track);
+    var st = statusMeta(track);
+    var items = track.tracking_items || [];
+    var qs = track.open_questions || [];
     var meter = "";
     if (track.meter) {
       var mPct = track.meter.max ? Math.round((track.meter.value / track.meter.max) * 100) : 0;
       meter =
-        '<div class="card-progress">' +
-        '<div class="card-progress-head"><span>' + esc(track.meter.label) +
-        "</span><strong>" + esc(track.meter.value) + " / " + esc(track.meter.max) + " " + esc(track.meter.unit || "") +
-        "</strong></div>" +
-        '<div class="bar"><div class="bar-fill" style="width:' + Math.max(mPct, 2) + '%"></div></div>' +
+        '<div class="detail-meter">' +
+          "<span>" + esc(track.meter.label) + "</span>" +
+          "<strong>" + esc(track.meter.value) + " / " + esc(track.meter.max) + " " + esc(track.meter.unit || "") + "</strong>" +
+          '<div class="bar"><div class="bar-fill" style="width:' + Math.max(mPct, 2) + '%"></div></div>' +
         "</div>";
     }
 
     return (
-      '<article class="card" data-card="' + esc(track.id) + '" style="--accent:' + esc(track.accent || "#5b8cff") + '">' +
-      '<div class="card-inner">' +
-        '<div class="card-head">' +
-          '<span class="card-icon" aria-hidden="true">' + esc(track.icon) + "</span>" +
-          '<div class="card-titles">' +
-            '<h2 class="card-name"><span class="card-no">' + esc(track.no) + "</span>" + esc(track.name) + "</h2>" +
-            '<p class="card-tagline">' + esc(track.tagline || "") + "</p>" +
+      '<article class="detail" data-card="' + esc(track.id) + '" style="--accent:' + esc(track.accent || "#5b8cff") + '">' +
+        '<header class="detail-head">' +
+          '<button type="button" class="back-btn" data-back>← 전체 보기</button>' +
+          '<div class="detail-title">' +
+            '<span class="detail-ico" aria-hidden="true">' + esc(track.icon) + "</span>" +
+            '<div class="detail-titles">' +
+              '<h2 class="detail-name"><span class="card-no">' + esc(track.no) + "</span>" + esc(track.name) + "</h2>" +
+              '<p class="detail-tag">' + esc(track.tagline || "") + "</p>" +
+            "</div>" +
+            '<span class="badge ' + st.cls + '">' + esc(st.label) + "</span>" +
           "</div>" +
-          badge(track.status) +
+          '<p class="detail-summary">' + esc(track.summary || "") + "</p>" +
+          '<div class="dstats">' +
+            '<div class="dstat"><span>체크</span><strong data-count-for="' + esc(track.id) + '">' + s.done + " / " + s.total + " · " + s.pct + '%</strong></div>' +
+            '<div class="dstat"><span>추적 항목</span><strong>' + f.items + "</strong></div>" +
+            '<div class="dstat"><span>미결</span><strong>' + f.open + "</strong></div>" +
+            '<div class="dstat"><span>다음 실행</span><strong>' + esc(fmtWhen(track.next_run && track.next_run.at, track.next_run && track.next_run.label)) + "</strong></div>" +
+          "</div>" +
+          '<div class="detail-bar"><span style="width:' + (s.pct || 0) + '%" data-fill-for="' + esc(track.id) + '"></span></div>' +
+          meter +
+          renderRoleChips() +
+        "</header>" +
+        '<div class="detail-cols">' +
+          '<div class="detail-main">' +
+            '<section class="dsec">' +
+              '<h3 class="dsec-title">🎯 추적 중인 대상 <span class="dsec-count">' + items.length + "</span></h3>" +
+              (items.length
+                ? '<ul class="titems">' + items.map(renderTItem).join("") + "</ul>"
+                : '<p class="dsec-empty">등록된 추적 항목이 없습니다.</p>') +
+            "</section>" +
+            '<section class="dsec">' +
+              '<h3 class="dsec-title">⏳ 미결 확인 사항 <span class="dsec-count">' + qs.length + "</span></h3>" +
+              (qs.length
+                ? '<ul class="qlist">' +
+                  qs
+                    .map(function (q) {
+                      return (
+                        '<li class="qitem">' +
+                          '<span class="q-who">' + esc(whoLabel(q.who)) + "</span>" +
+                          '<span class="q-text">' + esc(q.text) + "</span>" +
+                          (q.due ? '<span class="q-due">' + esc(q.due) + "</span>" : "") +
+                        "</li>"
+                      );
+                    })
+                    .join("") +
+                  "</ul>"
+                : '<p class="dsec-empty">미결 항목이 없습니다.</p>') +
+            "</section>" +
+            '<section class="dsec">' +
+              '<h3 class="dsec-title">✅ 진행 체크 <span class="dsec-count">' + s.done + "/" + s.total + "</span></h3>" +
+              renderChecks(track) +
+            "</section>" +
+          "</div>" +
+          '<aside class="detail-side">' +
+            '<section class="dsec">' +
+              '<h3 class="dsec-title">🕒 실행 기록</h3>' +
+              '<div class="runs">' + renderRunBox("next", track.next_run) + renderRunBox("last", track.last_run) + "</div>" +
+            "</section>" +
+            '<section class="dsec">' +
+              '<h3 class="dsec-title">🗓️ 스케줄</h3>' +
+              '<ul class="sched">' +
+                (track.schedule || [])
+                  .map(function (row) {
+                    return '<li><span class="when">' + esc(row.when) + '</span><span class="what">' + esc(row.what) + "</span></li>";
+                  })
+                  .join("") +
+              "</ul>" +
+            "</section>" +
+            '<section class="dsec">' +
+              '<h3 class="dsec-title">👥 담당 분담</h3>' +
+              renderOwners(track) +
+            "</section>" +
+            renderCommands(track) +
+            renderLinks(track) +
+            (track.note ? '<p class="card-note">' + esc(track.note) + "</p>" : "") +
+          "</aside>" +
         "</div>" +
-        '<p class="card-summary">' + esc(track.summary || "") + "</p>" +
-        '<div class="card-progress">' +
-          '<div class="card-progress-head"><span>체크리스트</span><strong>' + s.done + " / " + s.total + " · " + s.pct + "%</strong></div>" +
-          '<div class="bar"><div class="bar-fill" style="width:' + (s.pct || 0) + '%"></div></div>' +
-        "</div>" +
-        meter +
-        '<div class="runs">' +
-          renderRunBox("next", track.next_run) +
-          renderRunBox("last", track.last_run) +
-        "</div>" +
-        '<div class="section"><h3 class="section-title">스케줄</h3><ul class="sched">' +
-          (track.schedule || []).map(function (row) {
-            return '<li><span class="when">' + esc(row.when) + '</span><span class="what">' + esc(row.what) + "</span></li>";
-          }).join("") +
-        "</ul></div>" +
-        '<div class="section"><h3 class="section-title">담당 분담</h3>' + renderOwners(track) + "</div>" +
-        '<div class="section"><h3 class="section-title">진행 체크</h3>' + renderChecks(track) + "</div>" +
-        renderLinks(track) +
-        renderCommands(track) +
-        (track.note ? '<p class="card-note">' + esc(track.note) + "</p>" : "") +
-      "</div>" +
       "</article>"
     );
   }
 
   function renderTracks() {
     if (!statusData) return;
-    var host = el("tracks");
-    var list = statusData.tracks.filter(function (t) {
-      return state.track === "all" || t.id === state.track;
+    var ovHost = el("track-overview");
+    var dtHost = el("track-detail");
+    if (!ovHost || !dtHost) return;
+    if (state.track === "all") {
+      ovHost.hidden = false;
+      ovHost.innerHTML = statusData.tracks.map(renderOverviewCard).join("");
+      dtHost.hidden = true;
+      dtHost.innerHTML = "";
+    } else {
+      var track = trackById(state.track);
+      ovHost.hidden = true;
+      ovHost.innerHTML = "";
+      dtHost.hidden = false;
+      dtHost.innerHTML = track ? renderDetail(track) : "";
+    }
+    el("empty").hidden = uiListLength() > 0;
+  }
+
+  function uiListLength() {
+    if (!statusData) return 0;
+    return state.track === "all" ? statusData.tracks.length : (trackById(state.track) ? 1 : 0);
+  }
+
+  function refreshCounts(trackId) {
+    var track = trackById(trackId);
+    if (!track) return;
+    var s = statsFor(track);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-count-for="' + trackId + '"]'), function (node) {
+      node.textContent = s.done + " / " + s.total + " · " + s.pct + "%";
     });
-    host.classList.toggle("single", state.track !== "all");
-    host.innerHTML = list.map(renderCard).join("");
-    el("empty").hidden = list.length > 0;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-fill-for="' + trackId + '"]'), function (node) {
+      node.style.width = (s.pct || 0) + "%";
+    });
   }
 
   function renderAlerts() {
@@ -882,6 +1069,7 @@
     document.addEventListener("click", function (event) {
       var target = event.target.closest(
         "[data-view],[data-track],[data-role],[data-cmd],[data-jump],[data-alerts-toggle]," +
+        "[data-open],[data-back]," +
         "[data-skill-copy],[data-skill-doc],[data-skill-cat],[data-brain-cat],[data-copy-path]," +
         "[data-brain-item],#reset-checks"
       );
@@ -908,6 +1096,16 @@
         writeStore();
         renderTrackView();
         toast("내 체크를 초기화했습니다");
+        return;
+      }
+      if (target.hasAttribute("data-back")) {
+        setTrack("all");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      if (target.hasAttribute("data-open")) {
+        setView("tracks");
+        setTrack(target.getAttribute("data-open"));
         return;
       }
       if (target.hasAttribute("data-track")) {
@@ -978,6 +1176,13 @@
     });
 
     document.addEventListener("keydown", function (event) {
+      var card = event.target.closest && event.target.closest("[data-open]");
+      if (card && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        setView("tracks");
+        setTrack(card.getAttribute("data-open"));
+        return;
+      }
       var item = event.target.closest && event.target.closest("[data-brain-item]");
       if (item && (event.key === "Enter" || event.key === " ")) {
         event.preventDefault();
@@ -1007,17 +1212,9 @@
       renderProgress();
       renderFilters();
       var trackId = key.split(":")[0];
-      var track = trackById(trackId);
-      if (track) {
-        var s = statsFor(track);
-        var card = document.querySelector('[data-card="' + trackId + '"]');
-        if (card) {
-          var strong = card.querySelector(".card-progress-head strong");
-          var fill = card.querySelector(".card-progress .bar-fill");
-          if (strong) strong.textContent = s.done + " / " + s.total + " · " + s.pct + "%";
-          if (fill) fill.style.width = (s.pct || 0) + "%";
-        }
-      }
+      refreshCounts(trackId);
+      renderProgress();
+      renderPicker();
     });
 
     var skillSearch = el("skill-search");
@@ -1068,9 +1265,18 @@
     onScroll();
   }
 
+  function parseHash() {
+    var raw = (location.hash || "").replace(/^#/, "");
+    var parts = raw.split("/");
+    return {
+      view: VIEWS.indexOf(parts[0]) >= 0 ? parts[0] : null,
+      track: parts[1] || ""
+    };
+  }
+
   function initialView() {
-    var hash = (location.hash || "").replace("#", "");
-    if (VIEWS.indexOf(hash) >= 0) return hash;
+    var hash = parseHash();
+    if (hash.view) return hash.view;
     try {
       var saved = localStorage.getItem(VIEW_KEY);
       if (saved && VIEWS.indexOf(saved) >= 0) return saved;
@@ -1078,6 +1284,18 @@
       /* 무시 */
     }
     return "tracks";
+  }
+
+  function initialTrack() {
+    var hash = parseHash();
+    if (hash.track && trackById(hash.track)) return hash.track;
+    try {
+      var saved = localStorage.getItem(TRACK_KEY);
+      if (saved && (saved === "all" || trackById(saved))) return saved;
+    } catch (e) {
+      /* 무시 */
+    }
+    return "all";
   }
 
   function start() {
@@ -1118,7 +1336,10 @@
         renderBrain();
       }
       renderTabCounts();
-      setView(initialView(), { scroll: false });
+      var startView = initialView();
+      var startTrack = statusData && Array.isArray(statusData.tracks) ? initialTrack() : "all";
+      setView(startView, { scroll: false });
+      if (statusData && Array.isArray(statusData.tracks)) setTrack(startTrack, { scroll: false });
       bindDelegates();
     });
   }
