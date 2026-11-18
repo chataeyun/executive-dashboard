@@ -339,17 +339,24 @@
      ========================================================= */
   function renderProgress() {
     if (!statusData) return;
-    var t = totals();
+    var track = state.track === "all" ? null : trackById(state.track);
+    var t = track ? statsFor(track) : totals();
     el("overall-pct").textContent = t.pct + "%";
     el("overall-bar").style.width = t.pct + "%";
     el("overall-bar-wrap").setAttribute("aria-valuenow", String(t.pct));
 
-    var c = countByStatus();
     var roleName = state.role === "all" ? "전체 담당" : (statusData.roles[state.role] || {}).name || state.role;
-    var parts = [roleName, "체크 " + t.done + "/" + t.total + "항목", "가동 " + c.active, "대기 " + c.waiting];
-    if (c.blocked) parts.push("확인 필요 " + c.blocked);
-    el("overall-title").textContent =
-      state.track === "all" ? "전체 진행률" : (trackById(state.track) || {}).name + " 진행률";
+    var parts;
+    if (track) {
+      var f = trackFacts(track);
+      parts = [roleName, "체크 " + t.done + "/" + t.total + "항목", statusMeta(track).label, "추적 " + f.items + "건"];
+      if (f.open) parts.push("미결 " + f.open);
+    } else {
+      var c = countByStatus();
+      parts = [roleName, "체크 " + t.done + "/" + t.total + "항목", "가동 " + c.active, "대기 " + c.waiting];
+      if (c.blocked) parts.push("확인 필요 " + c.blocked);
+    }
+    el("overall-title").textContent = track ? track.name + " 진행률" : "전체 진행률";
     el("overall-meta").textContent = parts.join(" · ");
   }
 
