@@ -672,9 +672,19 @@ def do_push(message: str | None) -> int:
 
     result = git("push", "origin", branch, check=False)
     if result.returncode != 0:
-        print("푸시 실패:", file=sys.stderr)
-        print((result.stderr or result.stdout).strip(), file=sys.stderr)
-        return 1
+        # 실행 환경에 따라 credential helper 의 토큰이 만료돼 403 이 나는 경우가 있다.
+        # 이때는 helper 를 끄고 다시 시도한다(프록시·키체인이 인증을 처리하는 환경).
+        retry = subprocess.run(
+            ["git", "-c", "credential.helper=", "push", "origin", branch],
+            cwd=str(ROOT), text=True, capture_output=True, check=False,
+        )
+        if retry.returncode == 0:
+            print((retry.stderr or retry.stdout).strip())
+        else:
+            print("푸시 실패:", file=sys.stderr)
+            print((result.stderr or result.stdout).strip(), file=sys.stderr)
+            print((retry.stderr or retry.stdout).strip(), file=sys.stderr)
+            return 1
     print(f"푸시 완료: origin/{branch}")
     print("GitHub Pages 주소는 저장소 Settings → Pages 에서 확인할 수 있습니다.")
     return 0
