@@ -1,15 +1,18 @@
 /* =========================================================
-   AI 비서실 통합 관제탑 — app.js
-   - data/status.json 을 읽어 7개 트랙 카드를 그립니다.
-   - 체크 상태는 브라우저(localStorage)에만 저장됩니다.
+   AI 비서실 통합 관제탑 — app.js (v2)
+   3개 뷰: ① 7대 트랙 현황 ② 스킬 단축키 ③ 세컨드 브레인
+   - data/status.json · data/skills.json · data/brain.json 을 읽어 그립니다.
+   - 체크 상태만 브라우저(localStorage)에 저장됩니다.
    - 공개 저장소 배포를 전제로 하므로 개인정보를 담지 않습니다.
    ========================================================= */
 (function () {
   "use strict";
 
   var STORE_KEY = "execdash.v1.checks";
+  var VIEW_KEY = "execdash.v2.view";
   var TZ = "Asia/Seoul";
   var WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+  var VIEWS = ["tracks", "skills", "brain"];
 
   var STATUS = {
     active: { label: "가동 중", cls: "ok", icon: "●" },
@@ -19,9 +22,35 @@
     done: { label: "완료", cls: "done", icon: "✓" }
   };
 
-  var data = null;
-  var filters = { track: "all", role: "all" };
+  var CAT_ACCENT = {
+    work: "#8b94a7",
+    content: "#ff7a9c",
+    invest: "#5b8cff",
+    realestate: "#43c69a",
+    study: "#ff6b5b",
+    money: "#3fd0d4",
+    prizes: "#ffb347",
+    family: "#9d8bff"
+  };
+
+  var OWNER_LABEL = { main: "차차차", sub: "Claude Worker", both: "공동" };
+
+  var statusData = null;
+  var skillsData = null;
+  var brainData = null;
+
+  var state = {
+    view: "tracks",
+    track: "all",
+    role: "all",
+    skillCat: "all",
+    skillQ: "",
+    brainCat: "all",
+    brainQ: ""
+  };
+
   var localChecks = readStore();
+  var scrollMemo = {};
 
   /* ---------- 저장소 ---------- */
   function readStore() {
@@ -102,6 +131,14 @@
     return Number(t.month) + "/" + Number(t.day) + " " + t.hour + ":" + t.minute;
   }
 
+  function fmtDay(iso) {
+    if (!iso) return "";
+    var d = new Date(iso + "T00:00:00+09:00");
+    if (isNaN(d.getTime())) return iso;
+    var t = kstParts(d);
+    return Number(t.month) + "/" + Number(t.day);
+  }
+
   /* ---------- 유틸 ---------- */
   function esc(value) {
     return String(value == null ? "" : value)
@@ -127,18 +164,18 @@
     }, 2100);
   }
 
-  function copyText(text, okMessage) {
+  function copyText(text, okMessage, failMessage) {
     var done = function () {
       toast(okMessage || "복사했습니다");
     };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(done, function () {
-        legacyCopy(text) ? done() : toast("복사가 막혔습니다. 명령을 길게 눌러 복사해 주세요.");
+        legacyCopy(text) ? done() : toast(failMessage || "복사가 막혔습니다. 길게 눌러 복사해 주세요.");
       });
     } else if (legacyCopy(text)) {
       done();
     } else {
-      toast("복사가 막혔습니다. 명령을 길게 눌러 복사해 주세요.");
+      toast(failMessage || "복사가 막혔습니다. 길게 눌러 복사해 주세요.");
     }
   }
 
@@ -159,11 +196,34 @@
     }
   }
 
-  /* ---------- 집계 ---------- */
+  function hl(text, query) {
+    var safe = esc(text);
+    var needle = (query || "").trim();
+    if (!needle) return safe;
+    var hay = safe.toLowerCase();
+    var n = esc(needle).toLowerCase();
+    if (!n) return safe;
+    var out = "";
+    var i = 0;
+    while (true) {
+      var at = hay.indexOf(n, i);
+      if (at < 0) {
+        out += safe.slice(i);
+        break;
+      }
+      out += safe.slice(i, at) + "<mark>" + safe.substr(at, n.length) + "</mark>";
+      i = at + n.length;
+    }
+    return out;
+  }
+
+  /* =========================================================
+     ① 7대 트랙 — 집계
+     ========================================================= */
   function itemsFor(track) {
-    if (filters.role === "all") return track.checklist.slice();
+    if (state.role === "all") return track.checklist.slice();
     return track.checklist.filter(function (item) {
-      return (item.role || "main") === filters.role;
+      return (item.role || "main") === state.role;
     });
   }
 
@@ -177,7 +237,7 @@
 
   function totals() {
     var sum = { done: 0, total: 0 };
-    data.tracks.forEach(function (track) {
+    statusData.tracks.forEach(function (track) {
       var s = statsFor(track);
       sum.done += s.done;
       sum.total += s.total;
@@ -188,24 +248,39 @@
 
   function countByStatus() {
     var out = { active: 0, waiting: 0, blocked: 0, paused: 0, done: 0 };
-    data.tracks.forEach(function (t) {
+    statusData.tracks.forEach(function (t) {
       if (out[t.status] != null) out[t.status] += 1;
     });
     return out;
   }
 
-  /* ---------- 상단 ---------- */
-  function renderHeader() {
-    el("app-title").textContent = data.meta.title || "AI 비서실 통합 관제탑";
-    el("app-sub").textContent = data.meta.subtitle || "";
-    el("sync-time").textContent = fmtStamp(data.meta.generated_at);
-    el("privacy-note").textContent = data.meta.privacy_notice || "";
-    el("foot-build").textContent = "status.json · " + fmtStamp(data.meta.generated_at);
+  function trackById(id) {
+    if (!statusData) return null;
+    for (var i = 0; i < statusData.tracks.length; i++) {
+      if (statusData.tracks[i].id === id) return statusData.tracks[i];
+    }
+    return null;
+  }
 
-    var roles = el("roles");
-    roles.innerHTML = ["main", "sub"]
+  /* =========================================================
+     헤더 · 탭
+     ========================================================= */
+  function renderHeader() {
+    if (statusData) {
+      el("app-title").textContent = statusData.meta.title || "AI 비서실 통합 관제탑";
+      el("app-sub").textContent = statusData.meta.subtitle || "";
+      el("sync-time").textContent = fmtStamp(statusData.meta.generated_at);
+      el("privacy-note").textContent = statusData.meta.privacy_notice || "";
+      el("foot-build").textContent = "status.json · " + fmtStamp(statusData.meta.generated_at);
+    }
+  }
+
+  function renderRoles() {
+    if (!statusData) return;
+    var host = el("roles");
+    host.innerHTML = ["main", "sub"]
       .map(function (key) {
-        var r = data.roles[key] || {};
+        var r = statusData.roles[key] || {};
         return (
           '<div class="role ' + key + '">' +
           '<span class="role-badge">' + esc(r.kind || key) + "</span>" +
@@ -217,52 +292,76 @@
       .join("");
   }
 
+  function renderTabCounts() {
+    el("tab-count-tracks").textContent = statusData ? statusData.tracks.length : "—";
+    el("tab-count-skills").textContent = skillsData ? skillsData.skills.length : "—";
+    el("tab-count-brain").textContent = brainData ? brainData.entries.length : "—";
+  }
+
+  function setView(name, opts) {
+    if (VIEWS.indexOf(name) < 0) name = "tracks";
+    opts = opts || {};
+    if (state.view !== name) scrollMemo[state.view] = window.scrollY;
+
+    state.view = name;
+    VIEWS.forEach(function (v) {
+      var panel = el("view-" + v);
+      var tab = el("tab-" + v);
+      var on = v === name;
+      if (panel) panel.hidden = !on;
+      if (tab) {
+        tab.setAttribute("aria-selected", on ? "true" : "false");
+        tab.tabIndex = on ? 0 : -1;
+        tab.classList.toggle("active", on);
+      }
+    });
+
+    try {
+      localStorage.setItem(VIEW_KEY, name);
+    } catch (e) {
+      /* 무시 */
+    }
+    if (history.replaceState) history.replaceState(null, "", "#" + name);
+
+    if (opts.scroll !== false) {
+      var y = scrollMemo[name] || 0;
+      window.scrollTo({ top: y, behavior: "auto" });
+    }
+    if (name === "skills" && skillsData) renderSkills();
+    if (name === "brain" && brainData) renderBrain();
+  }
+
+  /* =========================================================
+     ① 7대 트랙 — 진행률·필터·카드
+     ========================================================= */
   function renderProgress() {
+    if (!statusData) return;
     var t = totals();
     el("overall-pct").textContent = t.pct + "%";
     el("overall-bar").style.width = t.pct + "%";
     el("overall-bar-wrap").setAttribute("aria-valuenow", String(t.pct));
 
     var c = countByStatus();
-    var roleName = filters.role === "all" ? "전체 담당" : (data.roles[filters.role] || {}).name || filters.role;
-    var parts = [
-      roleName,
-      "체크 " + t.done + "/" + t.total + "항목",
-      "가동 " + c.active,
-      "대기 " + c.waiting
-    ];
+    var roleName = state.role === "all" ? "전체 담당" : (statusData.roles[state.role] || {}).name || state.role;
+    var parts = [roleName, "체크 " + t.done + "/" + t.total + "항목", "가동 " + c.active, "대기 " + c.waiting];
     if (c.blocked) parts.push("확인 필요 " + c.blocked);
     el("overall-title").textContent =
-      filters.track === "all" ? "전체 진행률" : (trackById(filters.track) || {}).name + " 진행률";
+      state.track === "all" ? "전체 진행률" : (trackById(state.track) || {}).name + " 진행률";
     el("overall-meta").textContent = parts.join(" · ");
   }
 
-  /* ---------- 필터 ---------- */
-  function trackById(id) {
-    for (var i = 0; i < data.tracks.length; i++) {
-      if (data.tracks[i].id === id) return data.tracks[i];
-    }
-    return null;
-  }
-
   function renderFilters() {
+    if (!statusData) return;
     var trackRow = el("track-filters");
-    var chips = [
-      { id: "all", label: "전체", icon: "◎", count: data.tracks.length }
-    ].concat(
-      data.tracks.map(function (t) {
-        return {
-          id: t.id,
-          label: t.name,
-          icon: t.icon,
-          count: t.checklist.length
-        };
+    var chips = [{ id: "all", label: "전체", icon: "◎", count: statusData.tracks.length }].concat(
+      statusData.tracks.map(function (t) {
+        return { id: t.id, label: t.name, icon: t.icon, count: t.checklist.length };
       })
     );
 
     trackRow.innerHTML = chips
       .map(function (c) {
-        var selected = filters.track === c.id;
+        var selected = state.track === c.id;
         return (
           '<button type="button" class="chip" role="tab" data-track="' + esc(c.id) + '"' +
           ' aria-selected="' + (selected ? "true" : "false") + '">' +
@@ -276,17 +375,17 @@
     var roleRow = el("role-filters");
     var roles = [{ id: "all", label: "담당 전체" }];
     ["main", "sub"].forEach(function (key) {
-      var r = data.roles[key] || {};
+      var r = statusData.roles[key] || {};
       roles.push({ id: key, label: r.name || key, kind: r.kind || "" });
     });
 
     roleRow.innerHTML = roles
       .map(function (r) {
-        var pressed = filters.role === r.id;
+        var pressed = state.role === r.id;
         var count = "";
         if (r.id !== "all") {
           var open = 0;
-          data.tracks.forEach(function (track) {
+          statusData.tracks.forEach(function (track) {
             track.checklist.forEach(function (item) {
               if ((item.role || "main") === r.id && !isChecked(track, item)) open += 1;
             });
@@ -302,7 +401,7 @@
   }
 
   function setTrack(id) {
-    filters.track = id;
+    state.track = id;
     renderFilters();
     renderProgress();
     renderTracks();
@@ -313,13 +412,12 @@
   }
 
   function setRole(id) {
-    filters.role = id;
+    state.role = id;
     renderFilters();
     renderProgress();
     renderTracks();
   }
 
-  /* ---------- 카드 ---------- */
   function badge(status) {
     var s = STATUS[status] || { label: status || "—", cls: "pause" };
     return '<span class="badge ' + s.cls + '">' + esc(s.label) + "</span>";
@@ -328,7 +426,6 @@
   function renderRunBox(kind, run) {
     var label = kind === "next" ? "다음 스케줄" : "최근 실행";
     var when = fmtWhen(run && run.at, run && run.at ? null : (run && run.label));
-    var what = (run && run.label) || "";
     var showWhat = run && run.at && run.label ? run.label : "";
     return (
       '<div class="run-box ' + kind + '">' +
@@ -344,7 +441,7 @@
     ["main", "sub"].forEach(function (key) {
       var list = (track.owners || {})[key] || [];
       if (!list.length) return;
-      var role = (data.roles || {})[key] || {};
+      var role = (statusData.roles || {})[key] || {};
       out.push(
         '<div class="owner ' + key + '">' +
           "<h4>" + esc(role.name || key) + "</h4>" +
@@ -360,11 +457,10 @@
     if (!items.length) {
       return '<p class="card-note">이 담당의 체크 항목이 아직 없습니다.</p>';
     }
-    // 대부분이 메인 담당이라, 소수인 서브 담당 항목에만 표식을 남깁니다.
     var roleLabel = function (role) {
-      if (filters.role !== "all") return "";
+      if (state.role !== "all") return "";
       if (role !== "sub") return "";
-      var r = (data.roles || {}).sub || {};
+      var r = (statusData.roles || {}).sub || {};
       return '<span class="role-pill">' + esc(r.kind || "Sub") + "</span>";
     };
     return (
@@ -373,7 +469,7 @@
         var checked = isChecked(track, item);
         var role = item.role || "main";
         return (
-          '<li>' +
+          "<li>" +
           '<label class="check' + (checked ? " done" : "") + '">' +
           '<input type="checkbox" data-check="' + esc(track.id + ":" + item.id) + '"' +
           (checked ? " checked" : "") + ">" +
@@ -404,8 +500,8 @@
   function renderCommands(track) {
     var cmd = track.commands || {};
     if (!cmd.main && !cmd.sub) return "";
-    var mainName = ((data.roles || {}).main || {}).name || "차차차";
-    var subName = ((data.roles || {}).sub || {}).name || "클로드 워커";
+    var mainName = ((statusData.roles || {}).main || {}).name || "차차차";
+    var subName = ((statusData.roles || {}).sub || {}).name || "클로드 워커";
     var out = [];
 
     if (cmd.main) {
@@ -488,19 +584,21 @@
   }
 
   function renderTracks() {
+    if (!statusData) return;
     var host = el("tracks");
-    var list = data.tracks.filter(function (t) {
-      return filters.track === "all" || t.id === filters.track;
+    var list = statusData.tracks.filter(function (t) {
+      return state.track === "all" || t.id === state.track;
     });
-    host.classList.toggle("single", filters.track !== "all");
+    host.classList.toggle("single", state.track !== "all");
     host.innerHTML = list.map(renderCard).join("");
     el("empty").hidden = list.length > 0;
   }
 
   function renderAlerts() {
     var host = el("alerts");
-    var alerts = (data.alerts || []).filter(function (a) {
-      return filters.track === "all" || a.track === filters.track;
+    if (!statusData) return;
+    var alerts = (statusData.alerts || []).filter(function (a) {
+      return state.track === "all" || a.track === state.track;
     });
     if (!alerts.length) {
       host.innerHTML = "";
@@ -513,12 +611,11 @@
     if (infoCount) summary.push("참고 " + infoCount);
 
     if (alerts._open == null) alerts._open = window.innerWidth > 720;
-    var openClass = alerts._open ? " open" : "";
 
     host.innerHTML =
       '<div class="alerts-head">' +
         '<span class="alerts-dot" aria-hidden="true">' + (warnCount ? "⚠️" : "ℹ️") + "</span>" +
-        '<strong>' + esc(summary.join(" · ")) + "</strong>" +
+        "<strong>" + esc(summary.join(" · ")) + "</strong>" +
         '<button type="button" class="alerts-toggle" data-alerts-toggle aria-expanded="' +
           (alerts._open ? "true" : "false") + '">' + (alerts._open ? "접기" : "펼쳐 보기") + "</button>" +
       "</div>" +
@@ -538,24 +635,262 @@
             "</div>" +
           "</div>"
         );
-      })
-      .join("") +
+      }).join("") +
       "</div>";
   }
 
-  function renderAll() {
-    renderHeader();
+  function renderTrackView() {
+    renderRoles();
     renderFilters();
     renderProgress();
     renderAlerts();
     renderTracks();
   }
 
-  /* ---------- 이벤트 ---------- */
+  /* =========================================================
+     ② 스킬 단축키
+     ========================================================= */
+  function skillMatches(skill, query) {
+    if (!query) return true;
+    var blob = [
+      skill.name,
+      skill.tagline,
+      skill.when,
+      (skill.inputs || []).join(" "),
+      (skill.steps || []).join(" "),
+      skill.output,
+      skill.note,
+      skill.command,
+      skill.doc
+    ].join(" ").toLowerCase();
+    return blob.indexOf(query.toLowerCase()) >= 0;
+  }
+
+  function renderSkillFilters() {
+    if (!skillsData) return;
+    var cats = skillsData.meta.categories || [];
+    var counts = {};
+    skillsData.skills.forEach(function (s) {
+      counts[s.category] = (counts[s.category] || 0) + 1;
+    });
+    var chips = [{ id: "all", icon: "◎", label: "전체", count: skillsData.skills.length }].concat(
+      cats.map(function (c) {
+        return { id: c.id, icon: c.icon, label: c.label, count: counts[c.id] || 0 };
+      })
+    );
+    el("skill-filters").innerHTML = chips
+      .map(function (c) {
+        var on = state.skillCat === c.id;
+        return (
+          '<button type="button" class="chip" data-skill-cat="' + esc(c.id) + '"' +
+          ' aria-pressed="' + (on ? "true" : "false") + '">' +
+          '<span aria-hidden="true">' + esc(c.icon) + "</span>" + esc(c.label) +
+          (c.count ? '<span class="chip-count">' + c.count + "</span>" : "") +
+          "</button>"
+        );
+      })
+      .join("");
+  }
+
+  function renderSkills() {
+    if (!skillsData) return;
+    var host = el("skills");
+    var q = state.skillQ.trim();
+    var list = skillsData.skills.filter(function (s) {
+      if (state.skillCat !== "all" && s.category !== state.skillCat) return false;
+      return skillMatches(s, q);
+    });
+
+    host.innerHTML = list
+      .map(function (s) {
+        var accent = CAT_ACCENT[s.category] || "#5b8cff";
+        var owner = s.owner || "main";
+        var ownerLabel = OWNER_LABEL[owner] || owner;
+        return (
+          '<article class="skill" data-skill-card="' + esc(s.id) + '" style="--accent:' + esc(accent) + '">' +
+            '<div class="skill-head">' +
+              '<span class="skill-ico" aria-hidden="true">' + esc(s.icon) + "</span>" +
+              '<div class="skill-titles">' +
+                '<h3 class="skill-name">' + hl(s.name, q) + "</h3>" +
+                '<p class="skill-tagline">' + hl(s.tagline, q) + "</p>" +
+              "</div>" +
+              '<span class="owner-pill ' + esc(owner) + '">' + esc(ownerLabel) + "</span>" +
+            "</div>" +
+            (s.when ? '<p class="skill-when"><span>언제</span>' + hl(s.when, q) + "</p>" : "") +
+            (s.steps && s.steps.length
+              ? '<ol class="skill-steps">' + s.steps.map(function (x) { return "<li>" + hl(x, q) + "</li>"; }).join("") + "</ol>"
+              : "") +
+            '<div class="skill-io">' +
+              '<div class="skill-io-row"><span class="skill-io-k">참고</span>' +
+                '<div class="skill-io-v">' +
+                  (s.inputs || []).map(function (x) { return '<code class="path">' + hl(x, q) + "</code>"; }).join("") +
+                "</div>" +
+              "</div>" +
+              (s.output
+                ? '<div class="skill-io-row"><span class="skill-io-k">출력</span><div class="skill-io-v"><span class="skill-out">' + hl(s.output, q) + "</span></div></div>"
+                : "") +
+            "</div>" +
+            (s.note ? '<p class="skill-note">⚠ ' + hl(s.note, q) + "</p>" : "") +
+            '<div class="skill-actions">' +
+              '<button type="button" class="cmd-btn" data-skill-copy="' + esc(s.id) + '">' +
+                '<span class="cmd-ico" aria-hidden="true">▶</span>' +
+                "<span>실행 명령 복사</span>" +
+                '<span class="cmd-tail">복사 ⧉</span>' +
+              "</button>" +
+              (s.doc
+                ? '<button type="button" class="btn-mini" data-skill-doc="' + esc(s.id) + '">규칙 문서 경로</button>'
+                : "") +
+            "</div>" +
+            '<p class="cmd-preview" data-skill-preview="' + esc(s.id) + '">' + esc(s.command || "") + "</p>" +
+          "</article>"
+        );
+      })
+      .join("");
+
+    el("skills-empty").hidden = list.length > 0;
+    el("skills-fallback").hidden = true;
+  }
+
+  function setSkillCat(id) {
+    state.skillCat = id;
+    renderSkillFilters();
+    renderSkills();
+  }
+
+  function setSkillQuery(q) {
+    state.skillQ = q;
+    el("skill-clear").hidden = !q;
+    renderSkills();
+  }
+
+  /* =========================================================
+     ③ 세컨드 브레인
+     ========================================================= */
+  function brainMatches(entry, query) {
+    if (!query) return true;
+    var blob = [entry.title, entry.summary, entry.path, entry.type, (entry.tags || []).join(" ")].join(" ").toLowerCase();
+    return blob.indexOf(query.toLowerCase()) >= 0;
+  }
+
+  function renderBrainFilters() {
+    if (!brainData) return;
+    var cats = brainData.meta.categories || [];
+    var counts = {};
+    brainData.entries.forEach(function (e) {
+      counts[e.category] = (counts[e.category] || 0) + 1;
+    });
+    var chips = [{ id: "all", icon: "◎", label: "전체", count: brainData.entries.length }].concat(
+      cats.map(function (c) {
+        return { id: c.id, icon: c.icon, label: c.label, count: counts[c.id] || 0 };
+      })
+    );
+    el("brain-filters").innerHTML = chips
+      .map(function (c) {
+        var on = state.brainCat === c.id;
+        return (
+          '<button type="button" class="chip" data-brain-cat="' + esc(c.id) + '"' +
+          ' aria-pressed="' + (on ? "true" : "false") + '">' +
+          '<span aria-hidden="true">' + esc(c.icon) + "</span>" + esc(c.label) +
+          (c.count ? '<span class="chip-count">' + c.count + "</span>" : "") +
+          "</button>"
+        );
+      })
+      .join("");
+  }
+
+  function renderBrain() {
+    if (!brainData) return;
+    var q = state.brainQ.trim();
+    var list = brainData.entries
+      .filter(function (e) {
+        if (state.brainCat !== "all" && e.category !== state.brainCat) return false;
+        return brainMatches(e, q);
+      })
+      .sort(function (a, b) {
+        return String(b.updated || "").localeCompare(String(a.updated || ""));
+      });
+
+    el("brain-count").textContent = list.length + "개 항목";
+    el("brain-intro").textContent = brainData.meta.intro || el("brain-intro").textContent;
+
+    el("brain").innerHTML = list
+      .map(function (e) {
+        var accent = CAT_ACCENT[e.category] || "#5b8cff";
+        var link = "";
+        if (e.url) {
+          link = '<a class="brain-link" href="' + esc(e.url) + '" target="_blank" rel="noopener noreferrer">열기 ↗</a>';
+        } else if (e.private_link) {
+          link = '<span class="brain-lock" title="주소는 비공개 인덱스에 있습니다">🔒 주소 비공개</span>';
+        } else if (e.private) {
+          link = '<span class="brain-lock" title="파일은 개인 PC·드라이브에만 있습니다">🔒 비공개 경로</span>';
+        }
+        return (
+          '<article class="brain-item" data-brain-item="' + esc(e.id) + '" data-cat="' + esc(e.category) + '"' +
+            ' style="--accent:' + esc(accent) + '" tabindex="0" role="button" aria-expanded="false">' +
+            '<div class="brain-head">' +
+              '<span class="brain-ico" aria-hidden="true">' + esc(e.icon || "📄") + "</span>" +
+              '<div class="brain-titles">' +
+                '<h3 class="brain-title">' + hl(e.title, q) + "</h3>" +
+                '<p class="brain-path"><code>' + hl(e.path, q) + "</code></p>" +
+              "</div>" +
+              '<span class="type-badge">' + hl(e.type, q) + "</span>" +
+            "</div>" +
+            '<p class="brain-summary">' + hl(e.summary, q) + "</p>" +
+            '<div class="brain-foot">' +
+              '<span class="brain-tags">' +
+                (e.tags || []).slice(0, 4).map(function (t) { return "<span>#" + hl(t, q) + "</span>"; }).join("") +
+              "</span>" +
+              '<span class="brain-meta">' +
+                (link ? link + '<span class="dot">·</span>' : "") +
+                '<span class="brain-updated">' + esc(fmtDay(e.updated)) + "</span>" +
+                '<button type="button" class="btn-mini" data-copy-path="' + esc(e.id) + '">경로 복사</button>' +
+              "</span>" +
+            "</div>" +
+          "</article>"
+        );
+      })
+      .join("");
+
+    el("brain-empty").hidden = list.length > 0;
+    el("brain-fallback").hidden = true;
+  }
+
+  function setBrainCat(id) {
+    state.brainCat = id;
+    renderBrainFilters();
+    renderBrain();
+  }
+
+  function setBrainQuery(q) {
+    state.brainQ = q;
+    el("brain-clear").hidden = !q;
+    renderBrain();
+  }
+
+  function brainById(id) {
+    if (!brainData) return null;
+    for (var i = 0; i < brainData.entries.length; i++) {
+      if (brainData.entries[i].id === id) return brainData.entries[i];
+    }
+    return null;
+  }
+
+  /* =========================================================
+     이벤트
+     ========================================================= */
   function bindDelegates() {
     document.addEventListener("click", function (event) {
-      var target = event.target.closest("[data-track],[data-role],[data-cmd],[data-jump],[data-alerts-toggle],#reset-checks");
+      var target = event.target.closest(
+        "[data-view],[data-track],[data-role],[data-cmd],[data-jump],[data-alerts-toggle]," +
+        "[data-skill-copy],[data-skill-doc],[data-skill-cat],[data-brain-cat],[data-copy-path]," +
+        "[data-brain-item],#reset-checks"
+      );
       if (!target) return;
+
+      if (target.hasAttribute("data-view")) {
+        setView(target.getAttribute("data-view"));
+        return;
+      }
 
       if (target.hasAttribute("data-alerts-toggle")) {
         var body = document.querySelector(".alerts-body");
@@ -571,7 +906,7 @@
       if (target.id === "reset-checks") {
         localChecks = {};
         writeStore();
-        renderAll();
+        renderTrackView();
         toast("내 체크를 초기화했습니다");
         return;
       }
@@ -584,6 +919,7 @@
         return;
       }
       if (target.hasAttribute("data-jump")) {
+        setView("tracks");
         setTrack(target.getAttribute("data-jump"));
         return;
       }
@@ -600,7 +936,64 @@
           preview.textContent = text;
           preview.classList.add("open");
         }
+        return;
       }
+
+      if (target.hasAttribute("data-skill-cat")) {
+        setSkillCat(target.getAttribute("data-skill-cat"));
+        return;
+      }
+      if (target.hasAttribute("data-skill-copy")) {
+        var id = target.getAttribute("data-skill-copy");
+        var skill = null;
+        (skillsData.skills || []).forEach(function (s) { if (s.id === id) skill = s; });
+        if (!skill) return;
+        copyText(skill.command, "실행 명령을 복사했습니다 — 차차차에게 붙여 넣으세요");
+        var box = document.querySelector('[data-skill-preview="' + id + '"]');
+        if (box) box.classList.toggle("open", true);
+        return;
+      }
+      if (target.hasAttribute("data-skill-doc")) {
+        var sid = target.getAttribute("data-skill-doc");
+        var sk = null;
+        (skillsData.skills || []).forEach(function (s) { if (s.id === sid) sk = s; });
+        if (sk && sk.doc) copyText(sk.doc, "규칙 문서 경로를 복사했습니다");
+        return;
+      }
+
+      if (target.hasAttribute("data-brain-cat")) {
+        setBrainCat(target.getAttribute("data-brain-cat"));
+        return;
+      }
+      if (target.hasAttribute("data-copy-path")) {
+        var entry = brainById(target.getAttribute("data-copy-path"));
+        if (entry) copyText(entry.path, "경로를 복사했습니다");
+        return;
+      }
+      if (target.hasAttribute("data-brain-item")) {
+        var expanded = target.classList.toggle("open");
+        target.setAttribute("aria-expanded", expanded ? "true" : "false");
+        return;
+      }
+    });
+
+    document.addEventListener("keydown", function (event) {
+      var item = event.target.closest && event.target.closest("[data-brain-item]");
+      if (item && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        var open = item.classList.toggle("open");
+        item.setAttribute("aria-expanded", open ? "true" : "false");
+        return;
+      }
+      if (!event.target.classList || !event.target.classList.contains("viewtab")) return;
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      var tabs = Array.prototype.slice.call(document.querySelectorAll(".viewtab"));
+      var idx = tabs.indexOf(event.target);
+      if (idx < 0) return;
+      var next = event.key === "ArrowRight" ? (idx + 1) % tabs.length : (idx - 1 + tabs.length) % tabs.length;
+      var name = tabs[next].getAttribute("data-view");
+      setView(name);
+      tabs[next].focus();
     });
 
     document.addEventListener("change", function (event) {
@@ -626,31 +1019,43 @@
         }
       }
     });
+
+    var skillSearch = el("skill-search");
+    if (skillSearch) {
+      skillSearch.addEventListener("input", function () {
+        setSkillQuery(skillSearch.value || "");
+      });
+    }
+    var brainSearch = el("brain-search");
+    if (brainSearch) {
+      brainSearch.addEventListener("input", function () {
+        setBrainQuery(brainSearch.value || "");
+      });
+    }
+    var skillClear = el("skill-clear");
+    if (skillClear) {
+      skillClear.addEventListener("click", function () {
+        if (skillSearch) skillSearch.value = "";
+        setSkillQuery("");
+        if (skillSearch) skillSearch.focus();
+      });
+    }
+    var brainClear = el("brain-clear");
+    if (brainClear) {
+      brainClear.addEventListener("click", function () {
+        if (brainSearch) brainSearch.value = "";
+        setBrainQuery("");
+        if (brainSearch) brainSearch.focus();
+      });
+    }
   }
 
   /* ---------- 시작 ---------- */
-  function fail() {
-    el("fallback").hidden = false;
-    el("overall-meta").textContent = "상태 파일을 읽지 못했습니다.";
-  }
-
-  function start() {
-    fetch("data/status.json", { cache: "no-store" })
-      .then(function (res) {
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return res.json();
-      })
-      .then(function (json) {
-        if (!json || !Array.isArray(json.tracks)) throw new Error("bad shape");
-        data = json;
-        data.tracks.forEach(function (t) { t.checklist = t.checklist || []; });
-        renderAll();
-        bindDelegates();
-      })
-      .catch(function (err) {
-        if (window.console && console.error) console.error("[dashboard]", err);
-        fail();
-      });
+  function fetchJson(path) {
+    return fetch(path, { cache: "no-store" }).then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status + " " + path);
+      return res.json();
+    });
   }
 
   function bindScrollCompact() {
@@ -661,6 +1066,61 @@
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
+  }
+
+  function initialView() {
+    var hash = (location.hash || "").replace("#", "");
+    if (VIEWS.indexOf(hash) >= 0) return hash;
+    try {
+      var saved = localStorage.getItem(VIEW_KEY);
+      if (saved && VIEWS.indexOf(saved) >= 0) return saved;
+    } catch (e) {
+      /* 무시 */
+    }
+    return "tracks";
+  }
+
+  function start() {
+    Promise.all([
+      fetchJson("data/status.json").catch(function (err) {
+        if (window.console && console.error) console.error("[dashboard] status", err);
+        el("fallback").hidden = false;
+        el("overall-meta").textContent = "상태 파일을 읽지 못했습니다.";
+        return null;
+      }),
+      fetchJson("data/skills.json").catch(function (err) {
+        if (window.console && console.error) console.error("[dashboard] skills", err);
+        el("skills-fallback").hidden = false;
+        return null;
+      }),
+      fetchJson("data/brain.json").catch(function (err) {
+        if (window.console && console.error) console.error("[dashboard] brain", err);
+        el("brain-fallback").hidden = false;
+        return null;
+      })
+    ]).then(function (results) {
+      statusData = results[0];
+      skillsData = results[1];
+      brainData = results[2];
+
+      if (statusData && Array.isArray(statusData.tracks)) {
+        statusData.tracks.forEach(function (t) { t.checklist = t.checklist || []; });
+        renderHeader();
+        renderTrackView();
+      }
+      if (skillsData && Array.isArray(skillsData.skills)) {
+        el("skills-intro").textContent = (skillsData.meta || {}).intro || el("skills-intro").textContent;
+        renderSkillFilters();
+        renderSkills();
+      }
+      if (brainData && Array.isArray(brainData.entries)) {
+        renderBrainFilters();
+        renderBrain();
+      }
+      renderTabCounts();
+      setView(initialView(), { scroll: false });
+      bindDelegates();
+    });
   }
 
   if (document.readyState === "loading") {

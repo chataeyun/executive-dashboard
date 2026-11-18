@@ -587,12 +587,8 @@
       ],
       "links": [
         {
-          "label": "소방시설관리사 기출",
-          "url": "https://chataeyun.github.io/ffm-study/"
-        },
-        {
-          "label": "소방설비기사 전기 기출",
-          "url": "https://chataeyun.github.io/fpe-study/"
+          "label": "기출 학습 앱 2종 (세컨드 브레인)",
+          "url": "#brain"
         }
       ],
       "commands": {

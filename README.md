@@ -1,29 +1,37 @@
-# 🎛️ AI 비서실 통합 관제탑 (executive-dashboard)
+# 🎛️ AI 비서실 통합 관제탑 (executive-dashboard) v2
 
-메인 비서(차차차)와 서브 워커(Claude PC Worker)가 **7개 트랙**을 어떻게 나눠 진행 중인지
+메인 비서(차차차)와 서브 워커(Claude PC Worker)가 **7개 트랙**을 어떻게 나눠 진행 중인지,
+반복 업무를 어떤 **스킬 단축키**로 꺼내 쓰는지, 그 결과물이 어디에 쌓이는지(**세컨드 브레인**)를
 한 화면에서 보는 정적 대시보드입니다. GitHub Pages(`gh-pages` 브랜치)로 배포합니다.
 
 이 저장소는 **공개**를 전제로 하므로, 화면과 데이터에는 실명·회사·연락처·거주지·금액 원문이
 들어가지 않습니다. 원문 데이터는 개인 드라이브·로컬 워커 폴더에 분리 보관합니다.
 
+## 화면 구성 (상단 뷰 탭 3개)
+
+| 탭 | 무엇을 보여주나 | 조작 |
+|---|---|---|
+| 🎯 **7대 트랙 현황** | 트랙 카드 7개 · 진행률 · 담당 필터 · 확인 필요 알림 · 체크리스트 · 실행 명령 | 트랙/담당 칩 필터, 체크 토글(로컬 저장), 명령 복사 |
+| ⚡ **스킬 단축키** | 반복 업무 10종 카드(담당·언제·절차·참고자료·출력·주의) | 분류 칩 · 검색(하이라이트) · 실행 명령 복사 · 규칙 문서 경로 복사 |
+| 🧠 **세컨드 브레인** | 7대 트랙의 길잡이 문서·리포트·템플릿·웹앱·계정 30건 | 카테고리 칩 · 검색 · 카드 펼쳐 요약 미리보기 · 경로 복사 |
+
+- 뷰 선택은 `#tracks` / `#skills` / `#brain` 해시로 공유·기억됩니다(localStorage).
+- 트랙 체크 상태는 브라우저(localStorage)에만 저장되며, 원본 기준값은 `data/status.json`의 `done`입니다.
+- 하단 "내 체크 초기화"로 로컬 체크를 지울 수 있습니다.
+
 ## 파일 구성
 
 ```text
 executive-dashboard/
-├─ index.html            화면 골격
+├─ index.html            화면 골격(3개 뷰 + 탭)
 ├─ styles.css            다크/모던 스타일 (모바일·PC)
-├─ app.js                status.json 을 읽어 카드·필터·체크·복사 동작
-├─ data/status.json      현재 운영 상태 (이 파일만 고치면 화면이 바뀝니다)
-└─ update_status.py      상태 갱신 + 검증 + git push 헬퍼
+├─ app.js                JSON 3개를 읽어 트랙·스킬·지식 뷰를 그림
+├─ data/
+│  ├─ status.json        7대 트랙 상태·스케줄·체크리스트·실행 명령
+│  ├─ skills.json        스킬 단축키 카드 10종
+│  └─ brain.json         세컨드 브레인 지식 항목 30건
+└─ update_status.py      상태 갱신 + 형식/민감어 검증 + git push 헬퍼
 ```
-
-## 화면에서 되는 것
-
-- 상단: 전체 진행률, 마지막 동기화 시각, 메인/서브 역할
-- 트랙 탭(7개)과 담당 필터(차차차 / Claude Worker) — 담당을 고르면 그 담당의 체크 항목만 남고 진행률도 그 담당 기준으로 바뀝니다
-- 트랙별 카드: 상태 배지 · 다음 스케줄 · 최근 실행 · 스케줄 목록 · 담당 분담 · 진행 체크 · 바로가기 · 실행 명령 복사
-- 체크는 브라우저(localStorage)에만 저장됩니다. 기기·브라우저를 바꾸면 초기화되며, 원본 기준값은 `status.json`의 `done` 값입니다.
-- 하단 "내 체크 초기화"로 로컬 체크를 지울 수 있습니다.
 
 ## 상태 갱신 방법
 
@@ -32,6 +40,8 @@ cd executive-dashboard
 
 python3 update_status.py list                     # 트랙·상태·체크 요약
 python3 update_status.py items content            # 체크 항목 id 보기
+python3 update_status.py skills                   # 스킬 카드 목록
+python3 update_status.py brain                    # 지식 항목 목록
 
 python3 update_status.py set invest --status active \
   --summary "평일 두 번 발송 정상" \
@@ -42,12 +52,13 @@ python3 update_status.py alert add --track content --level warn \
   --title "계정 인증 필요" --text "인스타 앱에서 인증하면 재개됩니다."
 python3 update_status.py alert clear --track content
 
-python3 update_status.py validate                 # 형식 + 개인정보 점검
-python3 update_status.py push -m "chore: 상태 갱신"   # 커밋 + push
+python3 update_status.py validate                 # data/ 3개 파일 형식 + 민감어
+python3 update_status.py scan                     # 저장소 전체 파일 민감어
+python3 update_status.py push -m "chore: 상태 갱신"
 ```
 
 `set`, `check`, `alert` 뒤에 `--push`를 붙이면 저장 후 바로 커밋·푸시합니다.
-`validate`와 `push`는 실명·회사명·연락처·금액 원문 같은 값이 보이면 **저장·푸시를 중단**합니다.
+`validate`·`scan`·`push`는 실명·회사명·연락처·금액 원문 같은 값이 보이면 **저장·푸시를 중단**합니다.
 
 ### 금지어 목록 (공개 저장소에 올리지 않음)
 
@@ -86,3 +97,9 @@ git push -u origin gh-pages
 cd executive-dashboard && python3 -m http.server 8000
 # 브라우저에서 http://localhost:8000
 ```
+
+## 공개 범위 원칙
+
+- 트랙 상태·스킬 정의·문서 **경로와 요약**만 공개합니다.
+- 원문(회사 보고서·설비 자료·가계부·자산·가족 기록)은 공개 저장소에 넣지 않습니다.
+- 학습 웹앱·개인 문서의 실제 URL은 공개 화면에 쓰지 않고, 비공개 인덱스(`executive-office/CLAUDE.md`)에만 둡니다.

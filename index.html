@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b0f18">
-<meta name="description" content="메인 비서와 서브 워커의 7개 트랙 진행 상황을 한 화면에서 보는 통합 관제 대시보드입니다.">
+<meta name="description" content="메인 비서와 서브 워커가 7개 트랙을 어떻게 나눠 진행하는지, 반복 업무 스킬과 지식 문서까지 한 화면에서 보는 통합 관제 대시보드입니다.">
 <title>AI 비서실 통합 관제탑</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1220'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='%235b8cff' stroke-width='6'/%3E%3Ccircle cx='32' cy='32' r='4' fill='%233fd0d4'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="styles.css">
@@ -30,32 +30,112 @@
     </div>
   </div>
 
-  <div class="roles" id="roles" aria-label="역할 분담"></div>
-
-  <div class="progress-wrap">
-    <div class="progress-head">
-      <span class="progress-title" id="overall-title">전체 진행률</span>
-      <span class="progress-pct" id="overall-pct">—</span>
-    </div>
-    <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="overall-bar-wrap">
-      <div class="bar-fill" id="overall-bar"></div>
-    </div>
-    <p class="progress-meta" id="overall-meta">상태를 불러오는 중입니다…</p>
-  </div>
+  <nav class="viewtabs" id="viewtabs" role="tablist" aria-label="화면 전환">
+    <button type="button" class="viewtab" id="tab-tracks" role="tab" data-view="tracks"
+            aria-selected="true" aria-controls="view-tracks">
+      <span class="viewtab-ico" aria-hidden="true">🎯</span>
+      <span class="viewtab-label">7대 트랙 현황</span>
+      <span class="viewtab-count" id="tab-count-tracks">—</span>
+    </button>
+    <button type="button" class="viewtab" id="tab-skills" role="tab" data-view="skills"
+            aria-selected="false" aria-controls="view-skills" tabindex="-1">
+      <span class="viewtab-ico" aria-hidden="true">⚡</span>
+      <span class="viewtab-label">스킬 단축키</span>
+      <span class="viewtab-count" id="tab-count-skills">—</span>
+    </button>
+    <button type="button" class="viewtab" id="tab-brain" role="tab" data-view="brain"
+            aria-selected="false" aria-controls="view-brain" tabindex="-1">
+      <span class="viewtab-ico" aria-hidden="true">🧠</span>
+      <span class="viewtab-label">세컨드 브레인</span>
+      <span class="viewtab-count" id="tab-count-brain">—</span>
+    </button>
+  </nav>
 </header>
 
-<nav class="filters" aria-label="필터">
-  <div class="chip-row" id="track-filters" role="tablist" aria-label="트랙 선택"></div>
-  <div class="chip-row chip-row-role" id="role-filters" role="group" aria-label="담당 선택"></div>
-</nav>
+<main class="app-shell">
 
-<main class="page">
-  <section id="alerts" class="alerts" aria-label="확인 필요 항목"></section>
-  <section id="tracks" class="grid" aria-label="7대 트랙"></section>
-  <p id="empty" class="empty" hidden>표시할 트랙이 없습니다. 필터를 전체로 바꿔 보세요.</p>
-  <section id="fallback" class="fallback" hidden>
-    <h2>상태 파일을 읽지 못했습니다</h2>
-    <p><code>data/status.json</code>을 불러오지 못했습니다. 로컬에서 열었다면 <code>python3 -m http.server</code> 같은 간단한 서버로 열어 주세요.</p>
+  <!-- ─────────────── 1. 7대 트랙 현황 ─────────────── -->
+  <section class="view" id="view-tracks" role="tabpanel" aria-labelledby="tab-tracks">
+    <div class="roles" id="roles" aria-label="역할 분담"></div>
+
+    <div class="progress-wrap">
+      <div class="progress-head">
+        <span class="progress-title" id="overall-title">전체 진행률</span>
+        <span class="progress-pct" id="overall-pct">—</span>
+      </div>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="overall-bar-wrap">
+        <div class="bar-fill" id="overall-bar"></div>
+      </div>
+      <p class="progress-meta" id="overall-meta">상태를 불러오는 중입니다…</p>
+    </div>
+
+    <nav class="filters" aria-label="필터">
+      <div class="chip-row" id="track-filters" role="tablist" aria-label="트랙 선택"></div>
+      <div class="chip-row chip-row-role" id="role-filters" role="group" aria-label="담당 선택"></div>
+    </nav>
+
+    <div class="page-body">
+      <section id="alerts" class="alerts" aria-label="확인 필요 항목"></section>
+      <section id="tracks" class="grid" aria-label="7대 트랙"></section>
+      <p id="empty" class="empty" hidden>표시할 트랙이 없습니다. 필터를 전체로 바꿔 보세요.</p>
+      <section id="fallback" class="fallback" hidden>
+        <h2>상태 파일을 읽지 못했습니다</h2>
+        <p><code>data/status.json</code>을 불러오지 못했습니다. 로컬에서 열었다면 <code>python3 -m http.server</code> 같은 간단한 서버로 열어 주세요.</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ─────────────── 2. 스킬 단축키 ─────────────── -->
+  <section class="view" id="view-skills" role="tabpanel" aria-labelledby="tab-skills" hidden>
+    <div class="view-head">
+      <div class="view-head-text">
+        <h2 class="view-title">⚡ 스킬 단축키</h2>
+        <p class="view-desc" id="skills-intro">반복 업무를 카드 하나로 꺼내 쓰는 단축키 모음입니다.</p>
+      </div>
+      <div class="search">
+        <span class="search-ico" aria-hidden="true">🔎</span>
+        <input type="search" id="skill-search" class="search-input" placeholder="스킬·참고자료 검색 (예: 보고서, 카드, 4:5)" aria-label="스킬 검색" autocomplete="off">
+        <button type="button" class="search-clear" id="skill-clear" aria-label="검색어 지우기" hidden>✕</button>
+      </div>
+    </div>
+
+    <div class="chip-row chip-row-cat" id="skill-filters" role="group" aria-label="분류 선택"></div>
+
+    <div class="skill-grid" id="skills" aria-label="스킬 카드"></div>
+    <p id="skills-empty" class="empty" hidden>조건에 맞는 스킬이 없습니다. 검색어나 분류를 바꿔 보세요.</p>
+    <section id="skills-fallback" class="fallback" hidden>
+      <h2>스킬 목록을 읽지 못했습니다</h2>
+      <p><code>data/skills.json</code>을 불러오지 못했습니다. 간단한 서버로 열어 주세요.</p>
+    </section>
+  </section>
+
+  <!-- ─────────────── 3. 세컨드 브레인 ─────────────── -->
+  <section class="view" id="view-brain" role="tabpanel" aria-labelledby="tab-brain" hidden>
+    <div class="view-head">
+      <div class="view-head-text">
+        <h2 class="view-title">🧠 세컨드 브레인</h2>
+        <p class="view-desc" id="brain-intro">7대 트랙의 길잡이 문서·리포트·웹앱을 찾는 지식 탐색기입니다.</p>
+      </div>
+      <div class="search">
+        <span class="search-ico" aria-hidden="true">🔎</span>
+        <input type="search" id="brain-search" class="search-input" placeholder="문서·주제 검색 (예: 벤치마킹, 스키마, TQQQ)" aria-label="지식 검색" autocomplete="off">
+        <button type="button" class="search-clear" id="brain-clear" aria-label="검색어 지우기" hidden>✕</button>
+      </div>
+    </div>
+
+    <div class="chip-row chip-row-cat" id="brain-filters" role="group" aria-label="카테고리 선택"></div>
+
+    <div class="brain-toolbar">
+      <span class="brain-count" id="brain-count">—</span>
+      <span class="brain-sortnote">최근 갱신 순 · 카드를 누르면 요약이 펼쳐집니다</span>
+    </div>
+
+    <div class="brain-grid" id="brain" aria-label="지식 항목"></div>
+    <p id="brain-empty" class="empty" hidden>조건에 맞는 문서가 없습니다. 검색어나 카테고리를 바꿔 보세요.</p>
+    <section id="brain-fallback" class="fallback" hidden>
+      <h2>지식 목록을 읽지 못했습니다</h2>
+      <p><code>data/brain.json</code>을 불러오지 못했습니다. 간단한 서버로 열어 주세요.</p>
+    </section>
   </section>
 </main>
 
