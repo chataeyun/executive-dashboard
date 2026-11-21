@@ -37,6 +37,12 @@
       <span class="viewtab-label">7대 트랙 현황</span>
       <span class="viewtab-count" id="tab-count-tracks">—</span>
     </button>
+    <button type="button" class="viewtab" id="tab-crisis" role="tab" data-view="crisis"
+            aria-selected="false" aria-controls="view-crisis" tabindex="-1">
+      <span class="viewtab-ico" aria-hidden="true">🛡️</span>
+      <span class="viewtab-label">위기대응 · 50B</span>
+      <span class="viewtab-count" id="tab-count-crisis">—</span>
+    </button>
     <button type="button" class="viewtab" id="tab-skills" role="tab" data-view="skills"
             aria-selected="false" aria-controls="view-skills" tabindex="-1">
       <span class="viewtab-ico" aria-hidden="true">⚡</span>
@@ -84,7 +90,21 @@
     </div>
   </section>
 
-  <!-- ─────────────── 2. 스킬 단축키 ─────────────── -->
+  <!-- ─────────────── 2. 위기대응 · 50B ─────────────── -->
+  <section class="view" id="view-crisis" role="tabpanel" aria-labelledby="tab-crisis" hidden>
+    <section id="crisis-hero" class="crisis-hero" aria-label="시장 국면과 핵심 철칙"></section>
+    <section id="crisis-principles" class="crisis-block" aria-label="4대 생존·역전 원칙"></section>
+    <section id="crisis-leverage" class="crisis-block" aria-label="레버리지·현금흐름 구조"></section>
+    <section id="crisis-roadmap" class="crisis-block" aria-label="50B 로드맵"></section>
+    <section id="crisis-log" class="crisis-block" aria-label="시장 폭등·폭락 기록"></section>
+    <section id="crisis-actions" class="crisis-block" aria-label="원클릭 액션"></section>
+    <section id="crisis-fallback" class="fallback" hidden>
+      <h2>위기대응 데이터를 읽지 못했습니다</h2>
+      <p><code>data/crisis.json</code>을 불러오지 못했습니다. 간단한 서버로 열어 주세요.</p>
+    </section>
+  </section>
+
+  <!-- ─────────────── 3. 스킬 단축키 ─────────────── -->
   <section class="view" id="view-skills" role="tabpanel" aria-labelledby="tab-skills" hidden>
     <div class="view-head">
       <div class="view-head-text">
@@ -108,7 +128,7 @@
     </section>
   </section>
 
-  <!-- ─────────────── 3. 세컨드 브레인 ─────────────── -->
+  <!-- ─────────────── 4. 세컨드 브레인 ─────────────── -->
   <section class="view" id="view-brain" role="tabpanel" aria-labelledby="tab-brain" hidden>
     <div class="view-head">
       <div class="view-head-text">

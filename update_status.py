@@ -2,10 +2,11 @@
 """
 AI 비서실 통합 관제탑 — 상태·스킬·지식 갱신 헬퍼
 
-`data/` 아래 세 파일을 다룹니다.
+`data/` 아래 네 파일을 다룹니다.
   - status.json : 7대 트랙 진행 상황
   - skills.json : 스킬 단축키 카드
   - brain.json  : 세컨드 브레인 지식 탐색기 항목
+  - crisis.json : 위기대응 · 50B 탭(철칙·레버리지 비율·로드맵·시장 기록)
 
 차차차(메인)와 클로드 PC 워커(서브) 모두 같은 명령으로 상태를 남깁니다.
 
@@ -46,6 +47,7 @@ DATA_DIR = ROOT / "data"
 STATUS_PATH = DATA_DIR / "status.json"
 SKILLS_PATH = DATA_DIR / "skills.json"
 BRAIN_PATH = DATA_DIR / "brain.json"
+CRISIS_PATH = DATA_DIR / "crisis.json"
 TZ = ZoneInfo("Asia/Seoul")
 BRANCH = "gh-pages"
 ALLOWED_STATUS = ("active", "waiting", "blocked", "paused", "done")
@@ -301,6 +303,92 @@ def validate_brain(data: dict) -> list[str]:
     return errors
 
 
+def validate_crisis(data: dict) -> list[str]:
+    """위기대응 · 50B 탭(data/crisis.json)의 최소 스키마 점검."""
+    errors: list[str] = []
+    meta = data.get("meta") or {}
+    if not meta.get("title"):
+        errors.append("crisis.meta.title 이 비어 있습니다")
+
+    hero = data.get("hero") or {}
+    for key in ("regime", "doctrine", "stage", "goal"):
+        if not hero.get(key):
+            errors.append(f"crisis.hero.{key} 가 비어 있습니다")
+    pct = hero.get("stage_pct")
+    if not isinstance(pct, (int, float)) or not 0 <= pct <= 100:
+        errors.append("crisis.hero.stage_pct 는 0~100 숫자여야 합니다")
+    if not isinstance(hero.get("kpis"), list) or not hero.get("kpis"):
+        errors.append("crisis.hero.kpis 가 비어 있습니다")
+
+    principles = data.get("principles")
+    if not isinstance(principles, list) or len(principles) < 4:
+        errors.append("crisis.principles 는 4개 이상이어야 합니다")
+    for idx, p in enumerate(principles or []):
+        if not p.get("title") or not p.get("text"):
+            errors.append(f"crisis.principles[{idx}]: title/text 가 비어 있습니다")
+
+    lev = data.get("leverage_mix") or {}
+    items = lev.get("items")
+    if not isinstance(items, list) or not items:
+        errors.append("crisis.leverage_mix.items 가 비어 있습니다")
+    for idx, item in enumerate(items or []):
+        if not item.get("label"):
+            errors.append(f"crisis.leverage_mix[{idx}]: label 이 비어 있습니다")
+        if not isinstance(item.get("pct"), (int, float)):
+            errors.append(f"crisis.leverage_mix[{idx}]: pct 는 숫자여야 합니다")
+        if item.get("tone") not in ("keep", "cut", "watch"):
+            errors.append(f"crisis.leverage_mix[{idx}]: tone 은 keep/cut/watch 중 하나여야 합니다")
+    flow = lev.get("cashflow") or {}
+    if not isinstance(flow.get("items"), list) or not flow.get("items"):
+        errors.append("crisis.leverage_mix.cashflow.items 가 비어 있습니다")
+
+    road = data.get("roadmap") or {}
+    stages = road.get("stages")
+    if not isinstance(stages, list) or len(stages) != 4:
+        errors.append("crisis.roadmap.stages 는 4단계여야 합니다")
+    seen_stage = set()
+    for s in stages or []:
+        no = s.get("stage")
+        if not isinstance(no, int) or not 1 <= no <= 4:
+            errors.append(f"crisis.roadmap: stage 번호가 올바르지 않습니다 ({no})")
+        elif no in seen_stage:
+            errors.append(f"crisis.roadmap: stage 번호 중복 {no}")
+        seen_stage.add(no)
+        for key in ("name", "period", "target"):
+            if not s.get(key):
+                errors.append(f"crisis.roadmap[{no}].{key} 가 비어 있습니다")
+        for c in s.get("checks") or []:
+            if not isinstance(c.get("done"), bool):
+                errors.append(f"crisis.roadmap[{no}]: checks.done 은 true/false 여야 합니다")
+
+    log = data.get("market_log") or {}
+    entries = log.get("entries")
+    if not isinstance(entries, list) or len(entries) < 3:
+        errors.append("crisis.market_log.entries 는 3건 이상이어야 합니다")
+    for idx, e in enumerate(entries or []):
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(e.get("date", ""))):
+            errors.append(f"crisis.market_log[{idx}]: date 는 YYYY-MM-DD 여야 합니다")
+        for key in ("tag", "headline", "judgment", "action", "memo"):
+            if not e.get(key):
+                errors.append(f"crisis.market_log[{idx}].{key} 가 비어 있습니다")
+
+    actions = data.get("quick_actions")
+    if not isinstance(actions, list) or not actions:
+        errors.append("crisis.quick_actions 가 비어 있습니다")
+    seen_action = set()
+    for idx, a in enumerate(actions or []):
+        aid = a.get("id")
+        if not aid:
+            errors.append(f"crisis.quick_actions[{idx}]: id 가 비어 있습니다")
+        elif aid in seen_action:
+            errors.append(f"crisis.quick_actions: id 중복 {aid}")
+        seen_action.add(aid)
+        for key in ("label", "prompt"):
+            if not a.get(key):
+                errors.append(f"crisis.quick_actions[{idx}].{key} 가 비어 있습니다")
+    return errors
+
+
 def validate_all() -> list[str]:
     errors: list[str] = []
     try:
@@ -317,6 +405,11 @@ def validate_all() -> list[str]:
         errors.append("brain.json 을 읽지 못했습니다")
     else:
         errors += validate_brain(brain)
+    crisis = load_optional(CRISIS_PATH)
+    if crisis is None:
+        errors.append("crisis.json 을 읽지 못했습니다")
+    else:
+        errors += validate_crisis(crisis)
     return errors
 
 

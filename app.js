@@ -15,7 +15,7 @@
   var DRAFT_KEY = "execdash.v4.drafts";
   var TZ = "Asia/Seoul";
   var WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-  var VIEWS = ["tracks", "skills", "brain"];
+  var VIEWS = ["tracks", "crisis", "skills", "brain"];
 
   var STATUS = {
     active: { label: "가동 중", cls: "ok", icon: "●" },
@@ -39,6 +39,7 @@
   var OWNER_LABEL = { main: "차차차", sub: "Claude Worker", both: "공동" };
 
   var statusData = null;
+  var crisisData = null;
   var skillsData = null;
   var brainData = null;
 
@@ -303,6 +304,10 @@
 
   function renderTabCounts() {
     el("tab-count-tracks").textContent = statusData ? statusData.tracks.length : "—";
+    el("tab-count-crisis").textContent =
+      crisisData && crisisData.market_log && crisisData.market_log.entries
+        ? crisisData.market_log.entries.length
+        : "—";
     el("tab-count-skills").textContent = skillsData ? skillsData.skills.length : "—";
     el("tab-count-brain").textContent = brainData ? brainData.entries.length : "—";
   }
@@ -338,6 +343,7 @@
       var y = scrollMemo[name] || 0;
       window.scrollTo({ top: y, behavior: "auto" });
     }
+    if (name === "crisis" && crisisData) renderCrisis();
     if (name === "skills" && skillsData) renderSkills();
     if (name === "brain" && brainData) renderBrain();
   }
@@ -1003,6 +1009,289 @@
   }
 
   /* =========================================================
+     ⑤ 위기대응 · 50B (crisis.json)
+     ========================================================= */
+  var CRISIS_TONE = {
+    keep: { label: "유지", cls: "keep" },
+    cut: { label: "압축", cls: "cut" },
+    watch: { label: "점검", cls: "watch" }
+  };
+
+  function barRow(item, max) {
+    var tone = CRISIS_TONE[item.tone] || CRISIS_TONE.watch;
+    var width = Math.max(2, Math.min(100, (Number(item.pct) / (max || 100)) * 100));
+    return (
+      '<div class="lev-row" data-tone="' + esc(tone.cls) + '">' +
+        '<div class="lev-row-head">' +
+          '<span class="lev-label">' + esc(item.label) + "</span>" +
+          '<span class="lev-pct">' + esc(item.pct) + "%</span>" +
+        "</div>" +
+        '<div class="lev-bar"><span style="width:' + width.toFixed(1) + '%"></span></div>' +
+        '<div class="lev-row-foot">' +
+          '<span class="lev-role">' + esc(item.role) + "</span>" +
+          '<span class="lev-tag ' + esc(tone.cls) + '">' + esc(tone.label) + "</span>" +
+        "</div>" +
+        (item.note ? '<p class="lev-note">' + esc(item.note) + "</p>" : "") +
+      "</div>"
+    );
+  }
+
+  function renderCrisisHero() {
+    var host = el("crisis-hero");
+    if (!host || !crisisData) return;
+    var h = crisisData.hero || {};
+    var kpis = (h.kpis || [])
+      .map(function (k) {
+        return (
+          '<div class="kpi">' +
+            '<span class="kpi-label">' + esc(k.label) + "</span>" +
+            '<strong class="kpi-value">' + esc(k.value) + "</strong>" +
+            '<span class="kpi-note">' + esc(k.note) + "</span>" +
+          "</div>"
+        );
+      })
+      .join("");
+
+    host.innerHTML =
+      '<div class="crisis-hero-inner">' +
+        '<div class="crisis-hero-top">' +
+          '<span class="regime-badge ' + esc(h.regime_level || "fear") + '">' +
+            '<span class="regime-dot" aria-hidden="true"></span>' + esc(h.regime) +
+          "</span>" +
+          '<span class="stage-badge">' + esc(h.stage) + "</span>" +
+        "</div>" +
+        '<p class="crisis-regime-note">' + esc(h.regime_note) + "</p>" +
+        '<blockquote class="crisis-doctrine">' +
+          '<span class="doctrine-mark" aria-hidden="true">”</span>' +
+          esc(h.doctrine) +
+          '<span class="doctrine-note">' + esc(h.doctrine_note) + "</span>" +
+        "</blockquote>" +
+        '<div class="crisis-stagebar">' +
+          '<span class="crisis-stagebar-label">' + esc(h.goal_label) + "</span>" +
+          '<div class="bar"><div class="bar-fill" style="width:' + Math.max(1, Math.min(100, Number(h.stage_pct) || 0)) + '%"></div></div>' +
+          '<span class="crisis-stagebar-pct">' + esc(h.stage) + " · " + esc(h.stage_pct) + "%</span>" +
+        "</div>" +
+        '<div class="crisis-kpis">' + kpis + "</div>" +
+      "</div>";
+  }
+
+  function renderCrisisPrinciples() {
+    var host = el("crisis-principles");
+    if (!host || !crisisData) return;
+    var list = crisisData.principles || [];
+    host.innerHTML =
+      '<div class="crisis-head">' +
+        "<h2>4대 생존·역전 원칙</h2>" +
+        "<p>폭락장에서 판단이 흔들릴 때 확인하는 네 문장입니다.</p>" +
+      "</div>" +
+      '<div class="principle-grid">' +
+        list
+          .map(function (p) {
+            return (
+              '<article class="principle">' +
+                '<div class="principle-head">' +
+                  '<span class="principle-no">' + esc(p.no) + "</span>" +
+                  '<span class="principle-ico" aria-hidden="true">' + esc(p.icon) + "</span>" +
+                "</div>" +
+                '<h3 class="principle-title">' + esc(p.title) + "</h3>" +
+                '<p class="principle-text">' + esc(p.text) + "</p>" +
+                (p.rule ? '<p class="principle-rule">' + esc(p.rule) + "</p>" : "") +
+              "</article>"
+            );
+          })
+          .join("") +
+      "</div>";
+  }
+
+  function renderCrisisLeverage() {
+    var host = el("crisis-leverage");
+    if (!host || !crisisData) return;
+    var lev = crisisData.leverage_mix || {};
+    var items = lev.items || [];
+    var maxPct = 0;
+    items.forEach(function (i) { maxPct = Math.max(maxPct, Number(i.pct) || 0); });
+    if (lev.extra) maxPct = Math.max(maxPct, Number(lev.extra.pct) || 0);
+    maxPct = maxPct || 100;
+
+    var flow = lev.cashflow || {};
+    var burden = flow.burden || {};
+
+    host.innerHTML =
+      '<div class="crisis-head">' +
+        "<h2>" + esc(lev.title || "레버리지 구조") + "</h2>" +
+        "<p>" + esc(lev.subtitle || "") + "</p>" +
+      "</div>" +
+      '<div class="lev-wrap">' +
+        '<div class="lev-panel">' +
+          '<div class="lev-panel-head">' +
+            '<h3>부채 축</h3>' +
+            '<div class="lev-legend">' +
+              '<span class="lev-tag keep">유지 ' + esc(lev.keep_pct) + "%</span>" +
+              '<span class="lev-tag cut">압축 ' + esc(lev.cut_pct) + "%</span>" +
+            "</div>" +
+          "</div>" +
+          '<div class="lev-rows">' + items.map(function (i) { return barRow(i, maxPct); }).join("") + "</div>" +
+          (lev.extra ? '<div class="lev-sep">별도 축</div><div class="lev-rows">' + barRow(lev.extra, maxPct) + "</div>" : "") +
+          (lev.note ? '<p class="crisis-note">' + esc(lev.note) + "</p>" : "") +
+        "</div>" +
+        '<div class="lev-panel flow">' +
+          '<div class="lev-panel-head"><h3>' + esc(flow.title || "현금흐름") + "</h3></div>" +
+          '<p class="lev-sub">' + esc(flow.subtitle || "") + "</p>" +
+          '<div class="lev-rows">' + (flow.items || []).map(function (i) { return barRow(i, 100); }).join("") + "</div>" +
+          (burden.label
+            ? '<div class="burden">' +
+                '<div class="burden-head">' +
+                  '<span>' + esc(burden.label) + "</span>" +
+                  '<strong>' + esc(burden.pct) + "%</strong>" +
+                "</div>" +
+                '<div class="burden-bar"><span style="width:' + Math.min(100, Number(burden.pct) || 0) + '%"></span></div>' +
+                '<p class="crisis-note">' + esc(burden.note) + "</p>" +
+              "</div>"
+            : "") +
+        "</div>" +
+      "</div>";
+  }
+
+  function renderCrisisRoadmap() {
+    var host = el("crisis-roadmap");
+    if (!host || !crisisData) return;
+    var rm = crisisData.roadmap || {};
+    var stages = rm.stages || [];
+    host.innerHTML =
+      '<div class="crisis-head">' +
+        "<h2>" + esc(rm.title || "로드맵") + "</h2>" +
+        "<p>" + esc(rm.subtitle || "") + "</p>" +
+      "</div>" +
+      '<ol class="roadmap">' +
+        stages
+          .map(function (s) {
+            var current = s.status === "진행 중";
+            var checks = (s.checks || [])
+              .map(function (c) {
+                return '<li class="' + (c.done ? "done" : "todo") + '">' +
+                  '<span class="stage-check-mark" aria-hidden="true">' + (c.done ? "✓" : "○") + "</span>" +
+                  esc(c.label) +
+                  "</li>";
+              })
+              .join("");
+            return (
+              '<li class="stage-card' + (current ? " is-current" : "") + '">' +
+                '<div class="stage-top">' +
+                  '<span class="stage-no">Stage ' + esc(s.stage) + "</span>" +
+                  '<span class="stage-status ' + (current ? "on" : "idle") + '">' + esc(s.status) + "</span>" +
+                "</div>" +
+                '<h3 class="stage-name">' + esc(s.name) + "</h3>" +
+                '<p class="stage-period">' + esc(s.period) + "</p>" +
+                '<div class="stage-progress">' +
+                  '<div class="bar"><div class="bar-fill" style="width:' + Math.min(100, Number(s.progress) || 0) + '%"></div></div>' +
+                  '<span>' + esc(s.progress) + "%</span>" +
+                "</div>" +
+                '<p class="stage-target"><b>목표</b> ' + esc(s.target) + "</p>" +
+                '<ul class="stage-checks">' + checks + "</ul>" +
+                (s.focus ? '<p class="stage-focus">' + esc(s.focus) + "</p>" : "") +
+              "</li>"
+            );
+          })
+          .join("") +
+      "</ol>" +
+      (rm.note ? '<p class="crisis-note strong">' + esc(rm.note) + "</p>" : "");
+  }
+
+  function renderCrisisLog() {
+    var host = el("crisis-log");
+    if (!host || !crisisData) return;
+    var log = crisisData.market_log || {};
+    var entries = log.entries || [];
+    var fields = (log.daily_fields || [])
+      .map(function (f) { return "<span class=\"log-field\">" + esc(f) + "</span>"; })
+      .join("");
+
+    host.innerHTML =
+      '<div class="crisis-head">' +
+        "<h2>" + esc(log.title || "시장 기록") + "</h2>" +
+        "<p>" + esc(log.subtitle || "") + "</p>" +
+      "</div>" +
+      '<ol class="timeline">' +
+        entries
+          .map(function (e) {
+            var kind = e.tag_kind || "neutral";
+            return (
+              '<li class="tl-item" data-kind="' + esc(kind) + '">' +
+                '<div class="tl-rail" aria-hidden="true"><span class="tl-dot ' + esc(kind) + '"></span></div>' +
+                '<article class="tl-card">' +
+                  '<div class="tl-head">' +
+                    '<time class="tl-date">' + esc(e.date) + "</time>" +
+                    '<span class="tl-tag ' + esc(kind) + '">' + esc(e.tag) + "</span>" +
+                  "</div>" +
+                  '<h3 class="tl-title">' + esc(e.headline) + "</h3>" +
+                  '<div class="tl-facts">' +
+                    '<p><span class="tl-k">시장</span><span class="tl-v">' + esc(e.market) + "</span></p>" +
+                    '<p><span class="tl-k">계좌</span><span class="tl-v">' + esc(e.account) + "</span></p>" +
+                  "</div>" +
+                  '<p class="tl-block judge"><b>당시 판단</b>' + esc(e.judgment) + "</p>" +
+                  '<p class="tl-block act"><b>실행 행동</b>' + esc(e.action) + "</p>" +
+                  '<p class="tl-block memo"><b>복기 메모</b>' + esc(e.memo) + "</p>" +
+                "</article>" +
+              "</li>"
+            );
+          })
+          .join("") +
+      "</ol>" +
+      (fields ? '<div class="log-fields"><span class="log-fields-k">매일 기록 항목</span>' + fields + "</div>" : "");
+  }
+
+  function renderCrisisActions() {
+    var host = el("crisis-actions");
+    if (!host || !crisisData) return;
+    var actions = crisisData.quick_actions || [];
+    host.innerHTML =
+      '<div class="crisis-head">' +
+        "<h2>원클릭 액션</h2>" +
+        "<p>버튼을 누르면 차차차에게 보낼 문구가 복사됩니다. 채팅에 붙여 넣으면 바로 실행합니다.</p>" +
+      "</div>" +
+      '<div class="qa-grid">' +
+        actions
+          .map(function (a) {
+            return (
+              '<button type="button" class="qa-card" data-crisis-copy="' + esc(a.id) + '">' +
+                '<span class="qa-ico" aria-hidden="true">' + esc(a.icon) + "</span>" +
+                '<span class="qa-body">' +
+                  '<span class="qa-label">' + esc(a.label) + "</span>" +
+                  '<span class="qa-note">' + esc(a.note) + "</span>" +
+                "</span>" +
+                '<span class="qa-go" aria-hidden="true">문구 복사 ⧉</span>' +
+              "</button>"
+            );
+          })
+          .join("") +
+      "</div>" +
+      '<p class="crisis-footnote" id="crisis-footnote">' +
+        esc((crisisData.meta || {}).record_rule || "") +
+      "</p>";
+  }
+
+  function renderCrisis() {
+    if (!crisisData) return;
+    renderCrisisHero();
+    renderCrisisPrinciples();
+    renderCrisisLeverage();
+    renderCrisisRoadmap();
+    renderCrisisLog();
+    renderCrisisActions();
+    var fb = el("crisis-fallback");
+    if (fb) fb.hidden = true;
+  }
+
+  function crisisActionById(id) {
+    if (!crisisData) return null;
+    var list = crisisData.quick_actions || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) return list[i];
+    }
+    return null;
+  }
+
+  /* =========================================================
      ② 스킬 단축키
      ========================================================= */
   function skillMatches(skill, query) {
@@ -1338,7 +1627,7 @@
       var target = event.target.closest(
         "[data-act],[data-view],[data-track],[data-role],[data-cmd],[data-jump],[data-alerts-toggle]," +
         "[data-open],[data-back]," +
-        "[data-skill-copy],[data-skill-doc],[data-skill-cat],[data-brain-cat],[data-copy-path]," +
+        "[data-crisis-copy],[data-skill-copy],[data-skill-doc],[data-skill-cat],[data-brain-cat],[data-copy-path]," +
         "[data-brain-item],#reset-checks"
       );
       if (!target) return;
@@ -1411,6 +1700,13 @@
           preview.textContent = text;
           preview.classList.add("open");
         }
+        return;
+      }
+
+      if (target.hasAttribute("data-crisis-copy")) {
+        var ca = crisisActionById(target.getAttribute("data-crisis-copy"));
+        if (!ca) return;
+        copyText(ca.prompt, ca.label + " 문구를 복사했습니다 — 채팅에 붙여 넣으세요");
         return;
       }
 
@@ -1594,6 +1890,11 @@
         el("overall-meta").textContent = "상태 파일을 읽지 못했습니다.";
         return null;
       }),
+      fetchJson("data/crisis.json").catch(function (err) {
+        if (window.console && console.error) console.error("[dashboard] crisis", err);
+        el("crisis-fallback").hidden = false;
+        return null;
+      }),
       fetchJson("data/skills.json").catch(function (err) {
         if (window.console && console.error) console.error("[dashboard] skills", err);
         el("skills-fallback").hidden = false;
@@ -1606,14 +1907,16 @@
       })
     ]).then(function (results) {
       statusData = results[0];
-      skillsData = results[1];
-      brainData = results[2];
+      crisisData = results[1];
+      skillsData = results[2];
+      brainData = results[3];
 
       if (statusData && Array.isArray(statusData.tracks)) {
         statusData.tracks.forEach(function (t) { t.checklist = t.checklist || []; });
         renderHeader();
         renderTrackView();
       }
+      if (crisisData) renderCrisis();
       if (skillsData && Array.isArray(skillsData.skills)) {
         el("skills-intro").textContent = (skillsData.meta || {}).intro || el("skills-intro").textContent;
         renderSkillFilters();
