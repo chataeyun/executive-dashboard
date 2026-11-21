@@ -7,7 +7,7 @@
 <meta name="description" content="메인 비서와 서브 워커가 7개 트랙을 어떻게 나눠 진행하는지, 반복 업무 스킬과 지식 문서까지 한 화면에서 보는 통합 관제 대시보드입니다.">
 <title>AI 비서실 통합 관제탑</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1220'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='%235b8cff' stroke-width='6'/%3E%3Ccircle cx='32' cy='32' r='4' fill='%233fd0d4'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="styles.css?v=6">
+<link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
 <div class="aurora" aria-hidden="true"></div>
@@ -92,12 +92,12 @@
 
   <!-- ─────────────── 2. 위기대응 · 50B ─────────────── -->
   <section class="view" id="view-crisis" role="tabpanel" aria-labelledby="tab-crisis" hidden>
-    <section id="crisis-hero" class="crisis-hero" aria-label="시장 국면과 핵심 철칙"></section>
-    <section id="crisis-principles" class="crisis-block" aria-label="4대 생존·역전 원칙"></section>
-    <section id="crisis-leverage" class="crisis-block" aria-label="레버리지·현금흐름 구조"></section>
-    <section id="crisis-roadmap" class="crisis-block" aria-label="50B 로드맵"></section>
-    <section id="crisis-log" class="crisis-block" aria-label="시장 폭등·폭락 기록"></section>
-    <section id="crisis-actions" class="crisis-block" aria-label="원클릭 액션"></section>
+    <section id="crisis-hero" class="crisis-hero" aria-label="지금 시장 상태와 오늘 내가 할 일"></section>
+    <section id="crisis-principles" class="crisis-block" aria-label="10년 철칙 4가지"></section>
+    <section id="crisis-leverage" class="crisis-block" aria-label="내 빚과 남는 돈"></section>
+    <section id="crisis-roadmap" class="crisis-block" aria-label="50B까지 4단계"></section>
+    <section id="crisis-log" class="crisis-block" aria-label="폭락 일기"></section>
+    <section id="crisis-actions" class="crisis-block" aria-label="바로 시킬 일"></section>
     <section id="crisis-fallback" class="fallback" hidden>
       <h2>위기대응 데이터를 읽지 못했습니다</h2>
       <p><code>data/crisis.json</code>을 불러오지 못했습니다. 간단한 서버로 열어 주세요.</p>
@@ -170,6 +170,6 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="app.js?v=6"></script>
+<script src="app.js?v=7"></script>
 </body>
 </html>

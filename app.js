@@ -1013,40 +1013,40 @@
      ========================================================= */
   var CRISIS_TONE = {
     keep: { label: "유지", cls: "keep" },
-    cut: { label: "압축", cls: "cut" },
+    cut: { label: "줄임", cls: "cut" },
     watch: { label: "점검", cls: "watch" }
   };
 
-  function barRow(item, max) {
-    var tone = CRISIS_TONE[item.tone] || CRISIS_TONE.watch;
-    var width = Math.max(2, Math.min(100, (Number(item.pct) / (max || 100)) * 100));
-    return (
-      '<div class="lev-row" data-tone="' + esc(tone.cls) + '">' +
-        '<div class="lev-row-head">' +
-          '<span class="lev-label">' + esc(item.label) + "</span>" +
-          '<span class="lev-pct">' + esc(item.pct) + "%</span>" +
-        "</div>" +
-        '<div class="lev-bar"><span style="width:' + width.toFixed(1) + '%"></span></div>' +
-        '<div class="lev-row-foot">' +
-          '<span class="lev-role">' + esc(item.role) + "</span>" +
-          '<span class="lev-tag ' + esc(tone.cls) + '">' + esc(tone.label) + "</span>" +
-        "</div>" +
-        (item.note ? '<p class="lev-note">' + esc(item.note) + "</p>" : "") +
-      "</div>"
-    );
+  function toneOf(item) {
+    return CRISIS_TONE[(item && item.tone) || "watch"] || CRISIS_TONE.watch;
   }
 
   function renderCrisisHero() {
     var host = el("crisis-hero");
     if (!host || !crisisData) return;
     var h = crisisData.hero || {};
-    var kpis = (h.kpis || [])
+
+    var cells = (h.cells || [])
+      .map(function (c) {
+        var tone = toneOf(c);
+        return (
+          '<div class="bigcell" data-tone="' + esc(tone.cls) + '">' +
+            '<span class="bigcell-icon" aria-hidden="true">' + esc(c.icon || "") + "</span>" +
+            '<span class="bigcell-label">' + esc(c.label) + "</span>" +
+            '<strong class="bigcell-value">' + esc(c.value) + "</strong>" +
+            '<span class="bigcell-note">' + esc(c.note) + "</span>" +
+          "</div>"
+        );
+      })
+      .join("");
+
+    var chips = (h.kpis || [])
       .map(function (k) {
         return (
-          '<div class="kpi">' +
-            '<span class="kpi-label">' + esc(k.label) + "</span>" +
-            '<strong class="kpi-value">' + esc(k.value) + "</strong>" +
-            '<span class="kpi-note">' + esc(k.note) + "</span>" +
+          '<div class="kpi-chip">' +
+            '<span class="kpi-chip-k">' + esc(k.label) + "</span>" +
+            '<strong class="kpi-chip-v">' + esc(k.value) + "</strong>" +
+            '<span class="kpi-chip-n">' + esc(k.note) + "</span>" +
           "</div>"
         );
       })
@@ -1054,13 +1054,11 @@
 
     host.innerHTML =
       '<div class="crisis-hero-inner">' +
-        '<div class="crisis-hero-top">' +
-          '<span class="regime-badge ' + esc(h.regime_level || "fear") + '">' +
-            '<span class="regime-dot" aria-hidden="true"></span>' + esc(h.regime) +
-          "</span>" +
-          '<span class="stage-badge">' + esc(h.stage) + "</span>" +
-        "</div>" +
-        '<p class="crisis-regime-note">' + esc(h.regime_note) + "</p>" +
+        '<span class="regime-badge big ' + esc(h.regime_level || "fear") + '">' +
+          '<span class="regime-dot" aria-hidden="true"></span>' + esc(h.regime) +
+        "</span>" +
+        (h.regime_note ? '<p class="crisis-regime-note">' + esc(h.regime_note) + "</p>" : "") +
+        '<div class="cell-grid">' + cells + "</div>" +
         '<blockquote class="crisis-doctrine">' +
           '<span class="doctrine-mark" aria-hidden="true">”</span>' +
           esc(h.doctrine) +
@@ -1069,9 +1067,9 @@
         '<div class="crisis-stagebar">' +
           '<span class="crisis-stagebar-label">' + esc(h.goal_label) + "</span>" +
           '<div class="bar"><div class="bar-fill" style="width:' + Math.max(1, Math.min(100, Number(h.stage_pct) || 0)) + '%"></div></div>' +
-          '<span class="crisis-stagebar-pct">' + esc(h.stage) + " · " + esc(h.stage_pct) + "%</span>" +
+          '<span class="crisis-stagebar-pct">' + esc(h.goal_note || "") + "</span>" +
         "</div>" +
-        '<div class="crisis-kpis">' + kpis + "</div>" +
+        '<div class="kpi-strip">' + chips + "</div>" +
       "</div>";
   }
 
@@ -1081,8 +1079,8 @@
     var list = crisisData.principles || [];
     host.innerHTML =
       '<div class="crisis-head">' +
-        "<h2>4대 생존·역전 원칙</h2>" +
-        "<p>폭락장에서 판단이 흔들릴 때 확인하는 네 문장입니다.</p>" +
+        "<h2>10년 철칙 4가지</h2>" +
+        "<p>무서울 때 확인하는 네 문장입니다.</p>" +
       "</div>" +
       '<div class="principle-grid">' +
         list
@@ -1091,11 +1089,10 @@
               '<article class="principle">' +
                 '<div class="principle-head">' +
                   '<span class="principle-no">' + esc(p.no) + "</span>" +
-                  '<span class="principle-ico" aria-hidden="true">' + esc(p.icon) + "</span>" +
+                  '<span class="principle-ico" aria-hidden="true">' + esc(p.icon || "") + "</span>" +
                 "</div>" +
                 '<h3 class="principle-title">' + esc(p.title) + "</h3>" +
                 '<p class="principle-text">' + esc(p.text) + "</p>" +
-                (p.rule ? '<p class="principle-rule">' + esc(p.rule) + "</p>" : "") +
               "</article>"
             );
           })
@@ -1107,33 +1104,88 @@
     var host = el("crisis-leverage");
     if (!host || !crisisData) return;
     var lev = crisisData.leverage_mix || {};
-    var items = lev.items || [];
-
+    var split = lev.split || [];
     var flow = lev.cashflow || {};
     var burden = flow.burden || {};
 
+    var splitBar = split
+      .map(function (s) {
+        var tone = toneOf(s);
+        return '<span class="bigsplit-seg ' + esc(tone.cls) + '" style="width:' + Math.max(0, Math.min(100, Number(s.pct) || 0)) + '%"></span>';
+      })
+      .join("");
+
+    var splitLegend = split
+      .map(function (s) {
+        var tone = toneOf(s);
+        return (
+          '<div class="bigsplit-item" data-tone="' + esc(tone.cls) + '">' +
+            '<div class="bigsplit-item-head">' +
+              '<strong class="bigsplit-pct">' + esc(s.pct) + "%</strong>" +
+              '<span class="bigsplit-label">' + esc(s.label) + "</span>" +
+            "</div>" +
+            '<span class="bigsplit-caption">' + esc(s.caption) + "</span>" +
+            (s.note ? '<span class="bigsplit-note">' + esc(s.note) + "</span>" : "") +
+          "</div>"
+        );
+      })
+      .join("");
+
+    var miniRows = (lev.items || [])
+      .map(function (i) {
+        var tone = toneOf(i);
+        return (
+          '<div class="minirow" data-tone="' + esc(tone.cls) + '">' +
+            '<span class="minirow-label">' + esc(i.label) + "</span>" +
+            '<span class="minirow-pct">' + esc(i.pct) + "%</span>" +
+            '<span class="minirow-role">' + esc(i.role) + "</span>" +
+          "</div>"
+        );
+      })
+      .join("");
+
+    var steps = (flow.flow || [])
+      .map(function (f) {
+        var tone = toneOf(f);
+        return (
+          '<div class="flow-step" data-tone="' + esc(tone.cls) + '">' +
+            '<span class="flow-op" aria-hidden="true">' + esc(f.op || "→") + "</span>" +
+            '<span class="flow-body">' +
+              '<strong class="flow-label">' + esc(f.label) + "</strong>" +
+              '<span class="flow-sub">' + esc(f.sub) + "</span>" +
+            "</span>" +
+          "</div>"
+        );
+      })
+      .join("");
+
+    var incomeChips = (flow.items || [])
+      .map(function (i) {
+        return '<span class="income-chip">' + esc(i.label) + " " + esc(i.pct) + "%</span>";
+      })
+      .join("");
+
     host.innerHTML =
       '<div class="crisis-head">' +
-        "<h2>" + esc(lev.title || "레버리지 구조") + "</h2>" +
+        "<h2>" + esc(lev.title || "내 빚 & 남는 돈") + "</h2>" +
         "<p>" + esc(lev.subtitle || "") + "</p>" +
       "</div>" +
-      '<div class="lev-wrap">' +
-        '<div class="lev-panel">' +
-          '<div class="lev-panel-head">' +
-            '<h3>부채 축</h3>' +
-            '<div class="lev-legend">' +
-              '<span class="lev-tag keep">유지 ' + esc(lev.keep_pct) + "%</span>" +
-              '<span class="lev-tag cut">압축 ' + esc(lev.cut_pct) + "%</span>" +
-            "</div>" +
-          "</div>" +
-          '<div class="lev-rows">' + items.map(function (i) { return barRow(i, 100); }).join("") + "</div>" +
-          (lev.extra ? '<div class="lev-sep">별도 축</div><div class="lev-rows">' + barRow(lev.extra, 100) + "</div>" : "") +
+      '<div class="crisis-duo">' +
+        '<div class="crisis-card">' +
+          '<h3 class="crisis-card-title">빚, 두 갈래로 보기</h3>' +
+          '<div class="bigsplit" role="img" aria-label="비싼 빚 ' + esc(lev.cut_pct) + '%, 싼 빚 ' + esc(lev.keep_pct) + '%">' + splitBar + "</div>" +
+          '<div class="bigsplit-legend">' + splitLegend + "</div>" +
+          '<details class="mini-detail">' +
+            "<summary>빚 6갈래 자세히 보기</summary>" +
+            '<div class="minirows">' + miniRows + "</div>" +
+          "</details>" +
           (lev.note ? '<p class="crisis-note">' + esc(lev.note) + "</p>" : "") +
         "</div>" +
-        '<div class="lev-panel flow">' +
-          '<div class="lev-panel-head"><h3>' + esc(flow.title || "현금흐름") + "</h3></div>" +
-          '<p class="lev-sub">' + esc(flow.subtitle || "") + "</p>" +
-          '<div class="lev-rows">' + (flow.items || []).map(function (i) { return barRow(i, 100); }).join("") + "</div>" +
+        '<div class="crisis-card">' +
+          '<h3 class="crisis-card-title">' + esc(flow.title || "남는 돈 흐름") + "</h3>" +
+          '<p class="crisis-card-sub">' + esc(flow.subtitle || "") + "</p>" +
+          '<div class="flow-steps">' + steps + "</div>" +
+          (incomeChips ? '<div class="income-line"><span class="income-k">들어오는 돈 구성</span>' + incomeChips + "</div>" : "") +
           (burden.label
             ? '<div class="burden">' +
                 '<div class="burden-head">' +
@@ -1155,36 +1207,43 @@
     var stages = rm.stages || [];
     host.innerHTML =
       '<div class="crisis-head">' +
-        "<h2>" + esc(rm.title || "로드맵") + "</h2>" +
+        "<h2>" + esc(rm.title || "4단계") + "</h2>" +
         "<p>" + esc(rm.subtitle || "") + "</p>" +
       "</div>" +
       '<ol class="roadmap">' +
         stages
           .map(function (s) {
             var current = s.status === "진행 중";
-            var checks = (s.checks || [])
-              .map(function (c) {
-                return '<li class="' + (c.done ? "done" : "todo") + '">' +
-                  '<span class="stage-check-mark" aria-hidden="true">' + (c.done ? "✓" : "○") + "</span>" +
-                  esc(c.label) +
-                  "</li>";
-              })
-              .join("");
+            var checks =
+              current && (s.checks || []).length
+                ? '<ul class="stage-checks">' +
+                  (s.checks || [])
+                    .slice(0, 3)
+                    .map(function (c) {
+                      return (
+                        '<li class="' + (c.done ? "done" : "todo") + '">' +
+                          '<span class="stage-check-mark" aria-hidden="true">' + (c.done ? "✓" : "○") + "</span>" +
+                          esc(c.label) +
+                        "</li>"
+                      );
+                    })
+                    .join("") +
+                  "</ul>"
+                : "";
             return (
               '<li class="stage-card' + (current ? " is-current" : "") + '">' +
                 '<div class="stage-top">' +
-                  '<span class="stage-no">Stage ' + esc(s.stage) + "</span>" +
+                  '<span class="stage-no">' + esc(s.stage) + "단계</span>" +
                   '<span class="stage-status ' + (current ? "on" : "idle") + '">' + esc(s.status) + "</span>" +
                 "</div>" +
                 '<h3 class="stage-name">' + esc(s.name) + "</h3>" +
                 '<p class="stage-period">' + esc(s.period) + "</p>" +
+                '<p class="stage-line">' + esc(s.line || s.target) + "</p>" +
                 '<div class="stage-progress">' +
                   '<div class="bar"><div class="bar-fill" style="width:' + Math.min(100, Number(s.progress) || 0) + '%"></div></div>' +
-                  '<span>' + esc(s.progress) + "%</span>" +
+                  "<span>" + esc(s.progress) + "%</span>" +
                 "</div>" +
-                '<p class="stage-target"><b>목표</b> ' + esc(s.target) + "</p>" +
-                '<ul class="stage-checks">' + checks + "</ul>" +
-                (s.focus ? '<p class="stage-focus">' + esc(s.focus) + "</p>" : "") +
+                checks +
               "</li>"
             );
           })
@@ -1199,12 +1258,12 @@
     var log = crisisData.market_log || {};
     var entries = log.entries || [];
     var fields = (log.daily_fields || [])
-      .map(function (f) { return "<span class=\"log-field\">" + esc(f) + "</span>"; })
+      .map(function (f) { return '<span class="log-field">' + esc(f) + "</span>"; })
       .join("");
 
     host.innerHTML =
       '<div class="crisis-head">' +
-        "<h2>" + esc(log.title || "시장 기록") + "</h2>" +
+        "<h2>" + esc(log.title || "폭락 일기") + "</h2>" +
         "<p>" + esc(log.subtitle || "") + "</p>" +
       "</div>" +
       '<ol class="timeline">' +
@@ -1224,16 +1283,16 @@
                     '<p><span class="tl-k">시장</span><span class="tl-v">' + esc(e.market) + "</span></p>" +
                     '<p><span class="tl-k">계좌</span><span class="tl-v">' + esc(e.account) + "</span></p>" +
                   "</div>" +
-                  '<p class="tl-block judge"><b>당시 판단</b>' + esc(e.judgment) + "</p>" +
-                  '<p class="tl-block act"><b>실행 행동</b>' + esc(e.action) + "</p>" +
-                  '<p class="tl-block memo"><b>복기 메모</b>' + esc(e.memo) + "</p>" +
+                  '<p class="tl-block judge"><b>그날 판단</b>' + esc(e.judgment) + "</p>" +
+                  '<p class="tl-block act"><b>한 행동</b>' + esc(e.action) + "</p>" +
+                  '<p class="tl-block memo">' + esc(e.memo) + "</p>" +
                 "</article>" +
               "</li>"
             );
           })
           .join("") +
       "</ol>" +
-      (fields ? '<div class="log-fields"><span class="log-fields-k">매일 기록 항목</span>' + fields + "</div>" : "");
+      (fields ? '<div class="log-fields"><span class="log-fields-k">매일 남길 것</span>' + fields + "</div>" : "");
   }
 
   function renderCrisisActions() {
@@ -1242,8 +1301,8 @@
     var actions = crisisData.quick_actions || [];
     host.innerHTML =
       '<div class="crisis-head">' +
-        "<h2>원클릭 액션</h2>" +
-        "<p>버튼을 누르면 차차차에게 보낼 문구가 복사됩니다. 채팅에 붙여 넣으면 바로 실행합니다.</p>" +
+        "<h2>바로 시킬 일</h2>" +
+        "<p>누르면 차차차에게 보낼 문구가 복사됩니다. 채팅에 붙여 넣으면 바로 합니다.</p>" +
       "</div>" +
       '<div class="qa-grid">' +
         actions
