@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>투자 전략 길라잡이 — DC 퇴직연금 · 미국 직투</title>
+<style>
+:root{
+  --bg:#f9f9f7; --surface:#fcfcfb; --surface-2:#f0efec; --border:#e2e1dc;
+  --ink:#0b0b0b; --ink-2:#52514e; --ink-3:#7a7974;
+  --series:#2a78d6; --series-strong:#1c5cab; --muted-bar:#c3c2b7;
+  --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.05);
+}
+[data-theme="dark"]{
+  --bg:#0d0d0d; --surface:#1a1a19; --surface-2:#262624; --border:#383835;
+  --ink:#f0efec; --ink-2:#c3c2b7; --ink-3:#8f8e87;
+  --series:#3987e5; --series-strong:#86b6ef; --muted-bar:#52514e;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+h1{font-size:22px;margin:0}
+h2{font-size:18px;margin:28px 0 12px}
+h3{font-size:15px;margin:18px 0 8px;color:var(--ink-2)}
+.meta{color:var(--ink-3);font-size:13px}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--border)}
+button,.btn{font:inherit;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:8px;padding:6px 12px}
+button:hover{border-color:var(--series)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
+.grid2>*{min-width:0}
+.kv dd{overflow-wrap:anywhere}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.card-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.card-title{font-weight:700;font-size:16px}
+.sub{color:var(--ink-3);font-size:13px}
+.status{white-space:nowrap;flex-shrink:0;display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:4px 10px;border-radius:8px;font-size:14px;border:1.5px solid}
+.status .ic{font-size:15px}
+.st-shield{color:var(--good);border-color:var(--good)}
+.st-watch{color:var(--warning);border-color:var(--warning)}
+.st-attack{color:var(--critical);border-color:var(--critical)}
+.st-tp{color:var(--series);border-color:var(--series)}
+.hero{font-size:40px;font-weight:800;letter-spacing:-1px;margin:10px 0 0;font-variant-numeric:tabular-nums}
+.hero small{font-size:14px;font-weight:500;color:var(--ink-3);letter-spacing:0;margin-left:6px}
+/* drawdown gauge */
+.gauge{position:relative;height:34px;margin:26px 0 26px}
+.gauge .track{position:absolute;top:12px;left:0;right:0;height:10px;border-radius:5px;background:var(--surface-2)}
+.gauge .fill{position:absolute;top:12px;right:0;height:10px;border-radius:4px;background:var(--series)}
+.gauge .tick{position:absolute;top:4px;width:2px;height:26px;background:var(--ink-2)}
+.gauge .tick span{position:absolute;top:28px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--ink-2);white-space:nowrap}
+.gauge .tick.up span{top:-16px}
+.gauge .axis{position:absolute;top:26px;font-size:11px;color:var(--ink-3)}
+.action{background:var(--surface-2);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:6px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px;margin-top:10px}
+.kv dt{color:var(--ink-3)} .kv dd{margin:0;font-variant-numeric:tabular-nums}
+details.calc{margin-top:14px;border-top:1px dashed var(--border);padding-top:10px}
+details.calc summary{cursor:pointer;font-weight:600;font-size:14px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:10px}
+.form label{font-size:12px;color:var(--ink-3);display:flex;flex-direction:column;gap:4px}
+input[type=number]{font:inherit;padding:7px 9px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--ink);width:100%}
+.calc-out{margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.mini{background:var(--surface-2);border-radius:10px;padding:8px 10px}
+.mini .l{font-size:11px;color:var(--ink-3)} .mini .v{font-weight:700;font-variant-numeric:tabular-nums}
+.pos{color:var(--good)} .neg{color:var(--critical)}
+/* tabs */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:28px 0 0;border-bottom:1px solid var(--border)}
+.tab{border:none;border-bottom:2px solid transparent;border-radius:0;background:none;padding:10px 14px;color:var(--ink-3);font-weight:600}
+.tab.active{color:var(--ink);border-bottom-color:var(--series)}
+.panel{display:none;padding-top:8px} .panel.active{display:block}
+/* flow */
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:8px 0}
+.node{flex:1 1 170px;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:12px}
+.node.shield{border-color:var(--good)} .node.attack{border-color:var(--critical)} .node.tp{border-color:var(--series)}
+.node .nt{font-size:12px;color:var(--ink-3);font-weight:600}
+.node .nb{font-weight:700;margin:2px 0}
+.node ul{margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2)}
+.arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:86px;font-size:12px;color:var(--ink-2);text-align:center}
+.arrow b{font-size:20px;color:var(--ink-3);line-height:1}
+@media (max-width:720px){.flow{flex-direction:column}.arrow{min-width:0;flex-direction:row;gap:8px}.arrow b{transform:rotate(90deg)}}
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+th{color:var(--ink-3);font-weight:600;font-size:12px;background:var(--surface-2)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr.hl td{font-weight:700}
+tr:last-child td{border-bottom:none}
+/* bar chart (single series) */
+.bars{margin:6px 0 4px}
+.bar-row{display:grid;grid-template-columns:minmax(120px,290px) 1fr 70px;align-items:center;gap:10px;padding:5px 0;position:relative}
+.bar-row .lbl{font-size:13px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-row .barbox{height:14px;position:relative}
+.bar-row .bar{height:14px;border-radius:0 4px 4px 0;background:var(--series)}
+.bar-row .bar.ref{background:var(--muted-bar)}
+.bar-row .bar.best{background:var(--series-strong)}
+.bar-row .val{font-size:13px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+.bar-row:hover .bar{filter:brightness(1.15)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--ink-3);margin:2px 0 8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+#tip{position:fixed;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:6px 9px;font-size:12px;box-shadow:0 4px 18px rgba(0,0,0,.18);display:none;z-index:9;max-width:280px}
+/* checklist */
+.ck-group{margin-bottom:14px}
+.ck-group h3{display:flex;justify-content:space-between}
+.ck{display:flex;gap:10px;align-items:flex-start;padding:7px 4px;border-bottom:1px dashed var(--border);font-size:14px}
+.ck input{margin-top:4px;width:16px;height:16px;accent-color:var(--series)}
+.ck.done span{color:var(--ink-3);text-decoration:line-through}
+.note{font-size:12.5px;color:var(--ink-3);margin-top:8px}
+.warnbox{border-left:3px solid var(--warning);background:var(--surface-2);padding:10px 12px;border-radius:0 10px 10px 0;font-size:13px;margin:12px 0}
+footer{margin-top:40px;color:var(--ink-3);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>📈 투자 전략 길라잡이</h1>
+      <div class="meta">DC 퇴직연금 「역할분리 반도체 스위칭」 · 미국 직투 「SOXL -80% 스나이퍼」 · 규칙 확정 2026-11-21</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span class="badge" id="srcBadge">데이터: —</span>
+      <span class="badge" id="asof">기준: —</span>
+      <button id="themeBtn" aria-label="테마 전환">🌓 테마</button>
+    </div>
+  </header>
+
+  <div class="warnbox">시세는 <code>python strategy_briefing.py</code>를 실행할 때 갱신됩니다(같은 폴더의 <code>data.js</code>/<code>data.json</code>을 자동으로 읽음). 낙폭은 <b>역대 최고 종가 대비</b>입니다. 이 화면은 정보 제공용이며 매매 결정은 본인이 직접 합니다.</div>
+
+  <!-- ───── 요약 카드 ───── -->
+  <div class="grid2">
+    <section class="card" id="cardDC">
+      <div class="card-h">
+        <div><div class="card-title">계좌 1 · DC 퇴직연금</div><div class="sub">기준: SOXX 고점 대비 낙폭 · 진입 -40%(추천) / -35%(공격형)</div></div>
+        <span class="status" id="dcStatus">—</span>
+      </div>
+      <div class="hero" id="dcDD">—<small>SOXX 낙폭</small></div>
+      <div class="gauge" id="dcGauge"></div>
+      <div class="action" id="dcAction">—</div>
+      <dl class="kv" id="dcKV"></dl>
+      <details class="calc" id="dcCalc">
+        <summary>🧮 공격 모드 보유 중? 381180 평단 입력 → 수익률·익절가 계산</summary>
+        <div class="form">
+          <label>381180 공격 평단(원)<input type="number" id="dcEntry" min="0" step="5" placeholder="예: 31975"></label>
+          <label>381180 현재가(원)<input type="number" id="dcCur" min="0" step="5"></label>
+          <label>DC 평가금액(원, 선택)<input type="number" id="dcAmt" min="0" step="10000" placeholder="예: 100000000"></label>
+        </div>
+        <div class="calc-out" id="dcOut"></div>
+        <div class="note">평단을 입력하면 위 상태 카드가 「익절 대기 / 익절 실행」으로 바뀝니다. 입력값은 이 브라우저에만 저장됩니다. 비우면 방패 모드로 돌아갑니다.</div>
+      </details>
+    </section>
+
+    <section class="card" id="cardUS">
+      <div class="card-h">
+        <div><div class="card-title">계좌 2 · 미국 직투</div><div class="sub">기준: SOXL 고점 대비 낙폭 · 진입 -80%</div></div>
+        <span class="status" id="usStatus">—</span>
+      </div>
+      <div class="hero" id="usDD">—<small>SOXL 낙폭</small></div>
+      <div class="gauge" id="usGauge"></div>
+      <div class="action" id="usAction">—</div>
+      <dl class="kv" id="usKV"></dl>
+      <details class="calc" id="usCalc">
+        <summary>🧮 SOXL 보유 중? 평단 입력 → 1차(+300%)·2차(+400%) 목표가 계산</summary>
+        <div class="form">
+          <label>SOXL 평단($)<input type="number" id="usEntry" min="0" step="0.01" placeholder="예: 30.88"></label>
+          <label>SOXL 현재가($)<input type="number" id="usCur" min="0" step="0.01"></label>
+          <label>보유 수량(주, 선택)<input type="number" id="usQty" min="0" step="1"></label>
+          <label style="flex-direction:row;align-items:center;gap:6px;margin-top:18px"><input type="checkbox" id="usStage"> 1차(70%) 익절 완료</label>
+        </div>
+        <div class="calc-out" id="usOut"></div>
+        <div class="note">수량을 넣으면 1차 매도 수량(70%)과 1/3씩 재매수 금액을 계산합니다. 양도세 22%(연 250만원 공제)는 별도 유보하세요.</div>
+      </details>
+    </section>
+  </div>
+
+  <!-- ───── 탭 ───── -->
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="dc">DC 퇴직연금</button>
+    <button class="tab" data-tab="us">미국 직투</button>
+    <button class="tab" data-tab="px">시세표</button>
+    <button class="tab" data-tab="ck">실전 체크리스트</button>
+  </nav>
+
+  <!-- DC -->
+  <section class="panel active" id="p-dc">
+    <h2>모드 전환 흐름</h2>
+    <div class="flow">
+      <div class="node shield"><div class="nt">① 평시 · 방패 모드</div><div class="nb">배당 70 + 머니마켓 30</div>
+        <ul><li>TIGER 미국배당다우존스 (458730) 70%</li><li>TIGER 머니마켓액티브 30%</li></ul></div>
+      <div class="arrow"><b>→</b>SOXX<br>-40% 추천<br>(-35% 공격형)</div>
+      <div class="node attack"><div class="nt">② 폭락장 · 공격 모드</div><div class="nb">반도체 70 + 나스닥혼합 30</div>
+        <ul><li>TIGER 미국필라델피아반도체나스닥 (381180) 70%</li><li>TIGER 미국나스닥100채권혼합50 (435420) 30%</li><li>실질 주식 비중 85%</li></ul></div>
+      <div class="arrow"><b>→</b>381180<br>매수가 대비<br>+100%</div>
+      <div class="node tp"><div class="nt">③ 익절 · 방패 복귀</div><div class="nb">①로 전액 복귀</div>
+        <ul><li>30거래일 재진입 잠금</li><li>세금 0% (과세이연)</li></ul></div>
+    </div>
+    <div class="note">계좌 제약: 레버리지·인버스 불가, 위험자산 ≤70%, 안전자산 ≥30%. 기존 장기국채(RISE KIS국고채30년Enhanced, ACE 미국30년국채액티브(H))는 분할 교체 대상입니다.</div>
+
+    <h2>5년 백테스트 <span class="sub">2021-11-22 ~ 2026-11-20 · 원금 1억 · 세금 0%</span></h2>
+    <div class="legend"><span><i style="background:var(--series-strong)"></i>추천 전략</span><span><i style="background:var(--series)"></i>전략 변형</span><span><i style="background:var(--muted-bar)"></i>기준선·단독 보유</span></div>
+    <div class="bars" id="dcBars"></div>
+    <div class="tbl-wrap"><table id="dcTable"></table></div>
+  </section>
+
+  <!-- US -->
+  <section class="panel" id="p-us">
+    <h2>매뉴얼 흐름</h2>
+    <div class="flow">
+      <div class="node shield"><div class="nt">① 평시 · 방패</div><div class="nb">BRK-B · XLV · SCHD 각 1/3</div>
+        <ul><li>BRK-B: 무배당이라 배당세 0</li><li>XLV: 경기방어 헬스케어</li><li>SCHD: 배당 성장</li></ul></div>
+      <div class="arrow"><b>→</b>SOXL<br>고점 대비<br>-80%</div>
+      <div class="node attack"><div class="nt">② 공격</div><div class="nb">SOXL 100%</div>
+        <ul><li>방패 3종 전액 매도</li><li>직전 양도세 22% 몫은 현금 유보</li><li>신용·대출 0원</li></ul></div>
+      <div class="arrow"><b>→</b>+300%<br>(평단×4)</div>
+      <div class="node tp"><div class="nt">③ 1차 익절</div><div class="nb">SOXL 70% 매도</div>
+        <ul><li>매도대금 → BRK-B·XLV·SCHD 1/3씩</li></ul></div>
+      <div class="arrow"><b>→</b>+400%<br>(평단×5)</div>
+      <div class="node tp"><div class="nt">④ 2차 익절</div><div class="nb">잔여 30% 매도</div>
+        <ul><li>1/3씩 방패 매수 → ①</li><li>60거래일 재진입 잠금</li></ul></div>
+    </div>
+    <div class="note">ISA는 해외 ETF 직접 매수가 불가하므로 일반 해외주식 계좌에서 운용합니다. 배당세 15.4%, 해외주식 양도세 22%(연 250만원 기본공제, 다음 해 5월 신고).</div>
+
+    <h2>방패 6종 비교 <span class="sub">2021-01-04 ~ 2026-11-20 · 원금 1.5억 · 세후(청산 기준)</span></h2>
+    <div class="legend"><span><i style="background:var(--series-strong)"></i>채택 방패</span><span><i style="background:var(--series)"></i>비교 방패</span><span><i style="background:var(--muted-bar)"></i>기준선</span></div>
+    <div class="bars" id="usBars"></div>
+    <div class="tbl-wrap"><table id="usTable"></table></div>
+    <div class="warnbox">SOXL 공격 구간을 포함한 전략 전체 세후 MDD는 6종 모두 <b>-65.5%</b>입니다. 성과는 SOXL 폭락·반등 사이클에 크게 의존하므로 하락이 길어지면 결과가 크게 달라질 수 있습니다.</div>
+  </section>
+
+  <!-- Prices -->
+  <section class="panel" id="p-px">
+    <h2>종목별 시세 · 고점 대비 낙폭</h2>
+    <div class="tbl-wrap"><table id="pxTable"></table></div>
+    <div class="note">DD = 종가 / 고점 − 1. 「역대」는 상장 이후 최고 종가(분할 반영, 배당 미반영), 「52주」는 최근 1년 최고 종가 기준입니다.</div>
+  </section>
+
+  <!-- Checklist -->
+  <section class="panel" id="p-ck">
+    <h2>실전 행동 체크리스트 <button id="ckReset" style="font-size:12px;margin-left:8px">전체 초기화</button></h2>
+    <div class="grid2">
+      <div class="card" id="ckDC"></div>
+      <div class="card" id="ckUS"></div>
+    </div>
+    <div class="note">체크 상태는 이 브라우저(localStorage)에 저장됩니다.</div>
+  </section>
+
+  <footer>백테스트는 과거 데이터 기반이며 미래 수익을 보장하지 않습니다 · 규칙 원문: STRATEGY_MASTER.md</footer>
+</div>
+<div id="tip"></div>
+
+<!-- 최신 시세: strategy_briefing.py가 만든 data.js (file:// 에서도 동작). 없으면 아래 내장 기본값 사용 -->
+<script src="data.js" onerror="void 0"></script>
+<script>
+"use strict";
+/* ───────────── 내장 기본값 (2026-11-20 종가 실측치) ───────────── */
+const DEFAULT_DATA = {"generated_at":"2026-11-21T22:11:51+09:00","generated_at_kst":"2026-11-21 22:11 KST","rules":{"dc":{"entry_sniper":-40.0,"entry_aggr":-35.0,"take_profit":100.0,"lock_days":30},"us":{"entry":-80.0,"tp1":300.0,"tp1_sell_ratio":0.7,"tp2":400.0,"tp2_sell_ratio":0.3,"lock_days":60}},"tickers":{"SOXX":{"name":"iShares Semiconductor ETF","ccy":"USD","role":"DC 진입 기준 지표","symbol":"SOXX","date":"2026-11-20","close":123.4,"chg_1d_pct":-10.55,"high_52w":218.3367,"high_52w_date":"2026-06-22","ath":218.3367,"ath_date":"2026-06-22","dd_ath_pct":-43.48,"dd_52w_pct":-43.48,"history_start":"2001-07-13","first_cross":{"-30":"2026-11-02","-35":"2026-11-05","-40":"2026-11-20","-70":null,"-80":null}},"SOXL":{"name":"Direxion Semi Bull 3X","ccy":"USD","role":"직투 공격 자산 / 진입 지표","symbol":"SOXL","date":"2026-11-20","close":30.88,"chg_1d_pct":-31.83,"high_52w":300.77,"high_52w_date":"2026-06-22","ath":300.77,"ath_date":"2026-06-22","dd_ath_pct":-89.73,"dd_52w_pct":-89.73,"history_start":"2010-03-11","first_cross":{"-30":"2026-07-02","-35":"2026-07-02","-40":"2026-07-07","-70":"2026-10-22","-80":"2026-11-05"}},"TQQQ":{"name":"ProShares UltraPro QQQ","ccy":"USD","role":"참고 지표","symbol":"TQQQ","date":"2026-11-20","close":41.2,"chg_1d_pct":-15.94,"high_52w":87.22,"high_52w_date":"2026-06-02","ath":87.22,"ath_date":"2026-06-02","dd_ath_pct":-52.76,"dd_52w_pct":-52.76,"history_start":"2010-02-11","first_cross":{"-30":"2026-07-29","-35":"2026-11-05","-40":"2026-11-05","-70":null,"-80":null}},"381180.KS":{"name":"TIGER 미국필라델피아반도체나스닥","ccy":"KRW","role":"DC 공격 위험자산 70%","symbol":"381180.KS","date":"2026-11-20","close":31975.0,"chg_1d_pct":-6.94,"high_52w":57815.0,"high_52w_date":"2026-06-22","ath":57815.0,"ath_date":"2026-06-22","dd_ath_pct":-44.69,"dd_52w_pct":-44.69,"history_start":"2021-04-09","first_cross":{"-30":"2026-07-30","-35":"2026-10-26","-40":"2026-11-06","-70":null,"-80":null}},"458730.KS":{"name":"TIGER 미국배당다우존스","ccy":"KRW","role":"DC 방패 위험자산 70%","symbol":"458730.KS","date":"2026-11-20","close":14505.0,"chg_1d_pct":-0.82,"high_52w":15880.0,"high_52w_date":"2026-06-05","ath":15880.0,"ath_date":"2026-06-05","dd_ath_pct":-8.66,"dd_52w_pct":-8.66,"history_start":"2023-06-20","first_cross":{"-30":null,"-35":null,"-40":null,"-70":null,"-80":null}},"435420.KS":{"name":"TIGER 미국나스닥100채권혼합50","ccy":"KRW","role":"DC 공격 안전자산 30%","symbol":"435420.KS","date":"2026-11-20","close":13210.0,"chg_1d_pct":-1.71,"high_52w":15090.0,"high_52w_date":"2026-07-01","ath":15090.0,"ath_date":"2026-07-01","dd_ath_pct":-12.46,"dd_52w_pct":-12.46,"history_start":"2022-07-06","first_cross":{"-30":null,"-35":null,"-40":null,"-70":null,"-80":null}},"BRK-B":{"name":"Berkshire Hathaway B","ccy":"USD","role":"직투 방패 1/3","symbol":"BRK-B","date":"2026-11-20","close":570.0,"chg_1d_pct":-0.36,"high_52w":592.94,"high_52w_date":"2026-11-13","ath":592.94,"ath_date":"2026-11-13","dd_ath_pct":-3.87,"dd_52w_pct":-3.87,"history_start":"1996-05-09","first_cross":{"-30":null,"-35":null,"-40":null,"-70":null,"-80":null}},"XLV":{"name":"Health Care Select SPDR","ccy":"USD","role":"직투 방패 1/3","symbol":"XLV","date":"2026-11-20","close":177.24,"chg_1d_pct":-0.12,"high_52w":189.66,"high_52w_date":"2026-11-04","ath":189.66,"ath_date":"2026-11-04","dd_ath_pct":-6.55,"dd_52w_pct":-6.55,"history_start":"1998-12-22","first_cross":{"-30":null,"-35":null,"-40":null,"-70":null,"-80":null}},"SCHD":{"name":"Schwab US Dividend Equity","ccy":"USD","role":"직투 방패 1/3","symbol":"SCHD","date":"2026-11-20","close":33.94,"chg_1d_pct":-0.76,"high_52w":36.21,"high_52w_date":"2026-11-04","ath":36.21,"ath_date":"2026-11-04","dd_ath_pct":-6.27,"dd_52w_pct":-6.27,"history_start":"2011-10-20","first_cross":{"-30":null,"-35":null,"-40":null,"-70":null,"-80":null}},"KRW=X":{"name":"USD/KRW 환율","ccy":"KRW","role":"환율","symbol":"KRW=X","date":"2026-11-20","close":1334.79,"chg_1d_pct":0.33,"high_52w":1554.48,"high_52w_date":"2026-06-08","ath":1571.4,"ath_date":"2009-03-02","dd_ath_pct":-15.06,"dd_52w_pct":-14.13,"history_start":"2003-12-01","first_cross":{"-30":"2010-04-26","-35":"2014-05-19","-40":null,"-70":null,"-80":null}}},"signals":{"dc":{"account":"DC 퇴직연금","indicator":"SOXX 전고점 대비 낙폭","dd_pct":-43.48,"gap_to_sniper_pct":-3.48,"gap_to_aggr_pct":-8.48,"soxx_trigger_sniper":131.0,"soxx_trigger_aggr":141.92,"mode":"방패","first_cross_sniper":"2026-11-20","first_cross_aggr":"2026-11-05","status":"[공격 진입 신호!]","level":"추천 스나이퍼선(-40%) 도달","action":"458730 + 머니마켓 전액 매도 → 381180 70% + 435420 30% 매수"},"us":{"account":"미국 직투","indicator":"SOXL 전고점 대비 낙폭","dd_pct":-89.73,"gap_to_entry_pct":-9.73,"soxl_trigger_price":60.15,"mode":"방패","first_cross_entry":"2026-11-05","status":"[공격 진입 신호!]","level":"-80% 도달","action":"BRK-B/XLV/SCHD 전액 매도 → SOXL 100% 매수 (직전 양도세 납부분 별도 유보)"}}};
+
+/* ───────────── 확정 규칙 ───────────── */
+const RULES = {
+  dc:{entrySniper:-40, entryAggr:-35, tp:100, lock:30},
+  us:{entry:-80, tp1:300, tp1Ratio:0.7, tp2:400, tp2Ratio:0.3, lock:60}
+};
+const BT_DC = [
+  {name:"추천: -40% / +100% 역할분리", v:3.77, mdd:-12.3, kind:"best"},
+  {name:"-35% / +100% 역할분리 (수익률 1위)", v:3.96, mdd:-18.1, kind:"var"},
+  {name:"-40% / +100% 단기금리 고정 (안정성 1위)", v:3.62, mdd:-11.0, kind:"var"},
+  {name:"QQQ 5년 보유 (세후)", v:1.59, mdd:-30.3, kind:"ref"},
+  {name:"방패 단독 (배당70+MM30)", v:1.54, mdd:-9.7, kind:"ref"}
+];
+const BT_US = [
+  {name:"우량 저변동: BRK-B+XLV+SCHD", v:24.74, cagr:61.1, mdd:-17.3, kind:"best"},
+  {name:"올웨더: GLD+BRK-B+SGOV", v:22.54, cagr:58.6, mdd:null, kind:"var"},
+  {name:"반반: SCHD+SGOV", v:21.69, cagr:57.6, mdd:null, kind:"var"},
+  {name:"원조: O+MOAT+SCHD", v:21.60, cagr:57.5, mdd:-20.6, kind:"var"},
+  {name:"커버드콜: JEPQ+JEPI+SCHD", v:20.23, cagr:55.7, mdd:null, kind:"var"},
+  {name:"달러 파킹: SGOV", v:17.96, cagr:52.6, mdd:null, kind:"var"},
+  {name:"QQQ 단순 보유 (세후)", v:3.26, cagr:14.2, mdd:-30.4, kind:"ref"}
+];
+const CHECK = {
+  dc:[
+    {g:"평시 · 방패", items:["458730 70% / 머니마켓 30% 비중 확인 (월 1회)","장기국채 2종 잔량 → 머니마켓으로 분할 교체","브리핑으로 SOXX 낙폭 확인 (주 1회, -30% 이하면 매일)"]},
+    {g:"진입 · 공격 전환", items:["SOXX 종가 -40%(추천) / -35%(공격형) 도달 확인","마지막 익절 후 30거래일 경과 확인","458730 + 머니마켓 전액 매도 (결제일 확인)","381180 70% + 435420 30% 매수","381180 평단 기록 → 익절가 = 평단 × 2"]},
+    {g:"익절 · 방패 복귀", items:["381180 ≥ 평단 × 2 확인","381180 + 435420 전액 매도 → 458730 70% + 머니마켓 30%","익절일 기록 → 30거래일 잠금 시작"]}
+  ],
+  us:[
+    {g:"평시 · 방패", items:["BRK-B / XLV / SCHD 1/3 비중 확인 (분기 1회, ±5%p 이탈 시 리밸런싱)","직전 사이클 양도세 납부 예정액 별도 현금 유보 확인","SOXL 낙폭 확인 (-70% 이하면 매일)"]},
+    {g:"진입 · SOXL 100%", items:["SOXL 종가 -80% 도달 확인","완전 익절 후 60거래일 경과 확인","방패 3종 전액 매도 (세금 유보분 제외)","SOXL 100% 매수 · 평단 기록","증권사 앱에 평단×4 / 평단×5 지정가 알림 설정"]},
+    {g:"1차 익절 · +300%", items:["SOXL ≥ 평단 × 4 확인 → 보유 수량 70% 매도","세금 22% 예상분 유보 후 BRK-B/XLV/SCHD 1/3씩 매수"]},
+    {g:"2차 익절 · +400%", items:["SOXL ≥ 평단 × 5 확인 → 잔여 30% 전량 매도","1/3씩 방패 매수 → 완전 익절일 기록 (60거래일 잠금)","다음 해 5월 해외주식 양도세 신고 메모"]}
+  ]
+};
+
+/* ───────────── 유틸 ───────────── */
+const $ = id => document.getElementById(id);
+const LS = {
+  get:(k,d)=>{try{const v=localStorage.getItem("sh_"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+  set:(k,v)=>{try{localStorage.setItem("sh_"+k,JSON.stringify(v))}catch(e){}}
+};
+const fmt = (v,d=2)=> (v===null||v===undefined||isNaN(v))?"—":Number(v).toLocaleString("ko-KR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const won = v => isNaN(v)||v===null?"—":Math.round(v).toLocaleString("ko-KR")+"원";
+const usd = v => isNaN(v)||v===null?"—":"$"+fmt(v,2);
+const pct = (v,d=2) => isNaN(v)||v===null?"—":(v>0?"+":"")+fmt(v,d)+"%";
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+
+let DATA = null, SRC = "내장 기본값";
+if (window.STRATEGY_DATA) { DATA = window.STRATEGY_DATA; SRC = "data.js"; }
+else if (DEFAULT_DATA) { DATA = DEFAULT_DATA; }
+
+/* ───────────── 테마 ───────────── */
+(function(){
+  const t = LS.get("theme", window.matchMedia && matchMedia("(prefers-color-scheme: light)").matches ? "light":"dark");
+  document.documentElement.dataset.theme = t;
+  $("themeBtn").onclick = ()=>{const n=document.documentElement.dataset.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=n;LS.set("theme",n);};
+})();
+
+/* ───────────── 상태 렌더 ───────────── */
+const STATUS = {
+  shield:{cls:"st-shield",ic:"🛡️",txt:"방패 유지"},
+  watch:{cls:"st-watch",ic:"⚠️",txt:"방패 유지 · 경계"},
+  attack:{cls:"st-attack",ic:"🚨",txt:"공격 진입 신호!"},
+  aggr:{cls:"st-watch",ic:"⚡",txt:"공격형선 도달"},
+  wait:{cls:"st-tp",ic:"⏳",txt:"익절 대기"},
+  sell:{cls:"st-attack",ic:"💰",txt:"익절 실행 신호!"},
+  na:{cls:"st-watch",ic:"❔",txt:"데이터 없음"}
+};
+function setStatus(el,key,override){const s=STATUS[key];el.className="status "+s.cls;el.innerHTML=`<span class="ic">${s.ic}</span>${esc(override||s.txt)}`;}
+
+function gauge(el, dd, min, ticks){
+  const w = v => Math.min(100, Math.max(0, v/min*100));   // 0 → 오른쪽 끝, min → 왼쪽 끝
+  let h = `<div class="track"></div><span class="axis" style="right:0">0%</span><span class="axis" style="left:0">${min}%</span>`;
+  if (dd!==null && !isNaN(dd)) h += `<div class="fill" style="width:${w(dd)}%" title="현재 ${dd}%"></div>`;
+  ticks.forEach((t,i)=>{ h += `<div class="tick${i%2?" up":""}" style="right:${w(t.v)}%"><span>${esc(t.l)}</span></div>`; });
+  el.innerHTML = h;
+}
+
+function tk(sym){ return DATA && DATA.tickers ? DATA.tickers[sym] : null; }
+
+function renderDC(){
+  const s = tk("SOXX"), k = tk("381180.KS");
+  const dd = s && !s.error ? s.dd_ath_pct : null;
+  $("dcDD").innerHTML = (dd===null?"—":pct(dd))+"<small>SOXX 고점 대비 낙폭</small>";
+  gauge($("dcGauge"), dd, -60, [{v:-35,l:"-35% 공격형"},{v:-40,l:"-40% 추천"}]);
+
+  const entry = parseFloat($("dcEntry").value);
+  const cur = parseFloat($("dcCur").value) || (k && !k.error ? k.close : NaN);
+  const amt = parseFloat($("dcAmt").value);
+  const R = RULES.dc;
+  let kv = [];
+  if (s && !s.error){
+    kv.push(["SOXX 종가", usd(s.close)+` (${s.date})`],["역대 고점", usd(s.ath)+` (${s.ath_date})`],
+            ["진입 트리거가", `${usd(s.ath*(1+R.entrySniper/100))} (-40%) · ${usd(s.ath*(1+R.entryAggr/100))} (-35%)`]);
+    if (s.first_cross && s.first_cross["-35"]) kv.push(["이번 하락 최초 이탈", `-35% ${s.first_cross["-35"]} · -40% ${s.first_cross["-40"]||"미도달"}`]);
+  }
+  if (k && !k.error) kv.push(["381180 종가", won(k.close)+` (고점 대비 ${pct(k.dd_ath_pct)})`]);
+
+  if (entry>0){
+    const ret = (cur/entry-1)*100, target = entry*(1+R.tp/100);
+    if (ret >= R.tp){ setStatus($("dcStatus"),"sell"); $("dcAction").innerHTML = `<b>381180 + 435420 전량 매도 → 458730 70% + 머니마켓 30% 복귀.</b> 이후 ${R.lock}거래일 동안 재진입하지 않습니다.`; }
+    else { setStatus($("dcStatus"),"wait"); $("dcAction").innerHTML = `공격 포지션 유지 · 익절 목표가 <b>${won(target)}</b> (현재 대비 ${pct((target/cur-1)*100,1)})`; }
+    let out = [["현재 수익률",pct(ret),ret>=0?"pos":"neg"],["익절 목표가 (+100%)",won(target)],["목표까지",pct((target/cur-1)*100,1)]];
+    if (amt>0){ out.push(["익절 시 위험 70%",won(amt*(1+ret/100)*0.7)],["안전 30%",won(amt*(1+ret/100)*0.3)]); }
+    $("dcOut").innerHTML = out.map(o=>`<div class="mini"><div class="l">${o[0]}</div><div class="v ${o[2]||""}">${o[1]}</div></div>`).join("");
+  } else {
+    $("dcOut").innerHTML = amt>0 ? `<div class="mini"><div class="l">진입 시 381180 (70%)</div><div class="v">${won(amt*0.7)}</div></div><div class="mini"><div class="l">진입 시 435420 (30%)</div><div class="v">${won(amt*0.3)}</div></div>` : "";
+    if (dd===null){ setStatus($("dcStatus"),"na"); $("dcAction").textContent="시세 데이터가 없습니다. strategy_briefing.py를 실행하세요."; }
+    else if (dd <= R.entrySniper){ setStatus($("dcStatus"),"attack"); $("dcAction").innerHTML = `<b>추천선(-40%) 도달.</b> 458730 + 머니마켓 전액 매도 → <b>381180 70% + 435420 30%</b> 매수. 매수 평단을 아래 계산기에 기록하세요.`; }
+    else if (dd <= R.entryAggr){ setStatus($("dcStatus"),"aggr","공격형선(-35%) 도달"); $("dcAction").innerHTML = `공격형이면 지금 진입하고, 스나이퍼형(추천)이면 <b>-40%</b>까지 기다립니다.`; }
+    else if (dd <= -30){ setStatus($("dcStatus"),"watch"); $("dcAction").innerHTML = `진입선까지 ${fmt(dd-R.entryAggr,1)}%p 남았습니다. 낙폭을 매일 확인하세요.`; }
+    else { setStatus($("dcStatus"),"shield"); $("dcAction").innerHTML = `458730 70% + TIGER 머니마켓액티브 30% 유지 (진입선까지 ${fmt(dd-R.entryAggr,1)}%p).`; }
+  }
+  $("dcKV").innerHTML = kv.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("");
+}
+
+function renderUS(){
+  const s = tk("SOXL");
+  const dd = s && !s.error ? s.dd_ath_pct : null;
+  $("usDD").innerHTML = (dd===null?"—":pct(dd))+"<small>SOXL 고점 대비 낙폭</small>";
+  gauge($("usGauge"), dd, -100, [{v:-70,l:"-70% 경계"},{v:-80,l:"-80% 진입"}]);
+  const R = RULES.us;
+  const entry = parseFloat($("usEntry").value);
+  const cur = parseFloat($("usCur").value) || (s && !s.error ? s.close : NaN);
+  const qty = parseFloat($("usQty").value);
+  const stage1 = $("usStage").checked;
+  let kv = [];
+  if (s && !s.error){
+    kv.push(["SOXL 종가", usd(s.close)+` (${s.date})`],["역대 고점", usd(s.ath)+` (${s.ath_date})`],["진입 트리거가", usd(s.ath*(1+R.entry/100))+" (-80%)"]);
+    if (s.first_cross && s.first_cross["-80"]) kv.push(["-80% 최초 이탈", s.first_cross["-80"]]);
+  }
+  const fx = tk("KRW=X"); if (fx && !fx.error) kv.push(["USD/KRW", fmt(fx.close,2)]);
+
+  if (entry>0){
+    const ret=(cur/entry-1)*100, t1=entry*(1+R.tp1/100), t2=entry*(1+R.tp2/100);
+    if (!stage1 && ret>=R.tp2){ setStatus($("usStatus"),"sell","1·2차 익절 동시 실행!"); $("usAction").innerHTML="<b>SOXL 전량 매도 → BRK-B/XLV/SCHD 1/3씩 매수</b>, 60거래일 잠금."; }
+    else if (!stage1 && ret>=R.tp1){ setStatus($("usStatus"),"sell","1차 익절 실행 신호!"); $("usAction").innerHTML="<b>SOXL 70% 매도 → BRK-B/XLV/SCHD 1/3씩 매수</b> (양도세 22% 몫 유보)."; }
+    else if (stage1 && ret>=R.tp2){ setStatus($("usStatus"),"sell","2차 익절 실행 신호!"); $("usAction").innerHTML=`<b>잔여 SOXL 30% 매도 → 1/3씩 방패 매수</b>, ${R.lock}거래일 재진입 잠금.`; }
+    else { const nx=stage1?t2:t1; setStatus($("usStatus"),"wait"); $("usAction").innerHTML=`SOXL 보유 유지 · 다음 목표 ${stage1?"2차(+400%)":"1차(+300%)"} <b>${usd(nx)}</b> (현재 대비 ${pct((nx/cur-1)*100,1)})`; }
+    let out=[["현재 수익률",pct(ret),ret>=0?"pos":"neg"],["1차 목표 (+300%)",usd(t1)],["2차 목표 (+400%)",usd(t2)]];
+    if (qty>0){
+      const q1=Math.floor(qty*R.tp1Ratio);
+      if(!stage1){ out.push(["1차 매도 수량 (70%)",q1+"주"],["1차 후 잔여",(qty-q1)+"주"],["1차 매도대금 1/3씩",usd(q1*t1/3)]); }
+      else { out.push(["2차 매도 수량 (전량)",qty+"주"],["2차 매도대금 1/3씩",usd(qty*t2/3)]); }
+      out.push(["현재 평가금액",usd(qty*cur)]);
+    }
+    $("usOut").innerHTML=out.map(o=>`<div class="mini"><div class="l">${o[0]}</div><div class="v ${o[2]||""}">${o[1]}</div></div>`).join("");
+  } else {
+    $("usOut").innerHTML="";
+    if (dd===null){ setStatus($("usStatus"),"na"); $("usAction").textContent="시세 데이터가 없습니다. strategy_briefing.py를 실행하세요."; }
+    else if (dd<=R.entry){ setStatus($("usStatus"),"attack"); $("usAction").innerHTML="<b>-80% 도달.</b> BRK-B/XLV/SCHD 전액 매도 → <b>SOXL 100%</b> 매수 (직전 양도세 납부분은 별도 유보). 매수 평단을 아래 계산기에 기록하세요."; }
+    else if (dd<=-70){ setStatus($("usStatus"),"watch"); $("usAction").innerHTML=`진입선까지 ${fmt(dd-R.entry,1)}%p 남았습니다. 낙폭을 매일 확인하세요.`; }
+    else { setStatus($("usStatus"),"shield"); $("usAction").innerHTML=`BRK-B / XLV / SCHD 각 1/3 유지 (진입선까지 ${fmt(dd-R.entry,1)}%p).`; }
+  }
+  $("usKV").innerHTML = kv.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("");
+}
+
+/* ───────────── 차트 & 표 ───────────── */
+function bars(el, rows, unit, tipFn){
+  const max = Math.max(...rows.map(r=>r.v));
+  el.innerHTML = rows.map((r,i)=>`<div class="bar-row" data-i="${i}"><div class="lbl" title="${esc(r.name)}">${esc(r.name)}</div><div class="barbox"><div class="bar ${r.kind==="best"?"best":r.kind==="ref"?"ref":""}" style="width:${(r.v/max*100).toFixed(1)}%"></div></div><div class="val">${fmt(r.v,2)}${unit}</div></div>`).join("");
+  const tip=$("tip");
+  el.querySelectorAll(".bar-row").forEach(row=>{
+    row.addEventListener("mousemove",e=>{tip.innerHTML=tipFn(rows[+row.dataset.i]);tip.style.display="block";tip.style.left=Math.min(e.clientX+14,innerWidth-290)+"px";tip.style.top=(e.clientY+14)+"px";});
+    row.addEventListener("mouseleave",()=>tip.style.display="none");
+  });
+}
+function renderBT(){
+  bars($("dcBars"), BT_DC, "억", r=>`<b>${esc(r.name)}</b><br>최종 ${fmt(r.v,2)}억 · MDD ${fmt(r.mdd,1)}%`);
+  $("dcTable").innerHTML = `<tr><th>전략</th><th class="num">최종 자산</th><th class="num">MDD</th></tr>`+
+    BT_DC.map(r=>`<tr class="${r.kind==="best"?"hl":""}"><td>${r.kind==="best"?"⭐ ":""}${esc(r.name)}</td><td class="num">${fmt(r.v,2)}억</td><td class="num">${fmt(r.mdd,1)}%</td></tr>`).join("");
+  bars($("usBars"), BT_US, "억", r=>`<b>${esc(r.name)}</b><br>세후 ${fmt(r.v,2)}억 · CAGR ${fmt(r.cagr,1)}%${r.mdd!==null?` · 방패 MDD ${fmt(r.mdd,1)}%`:""}`);
+  $("usTable").innerHTML = `<tr><th>순위</th><th>방패 구성</th><th class="num">세후 최종</th><th class="num">세후 CAGR</th><th class="num">방패 MDD</th></tr>`+
+    BT_US.map((r,i)=>`<tr class="${r.kind==="best"?"hl":""}"><td>${r.kind==="ref"?"기준":(i+1)+"위"}</td><td>${r.kind==="best"?"⭐ ":""}${esc(r.name)}</td><td class="num">${fmt(r.v,2)}억</td><td class="num">${fmt(r.cagr,1)}%</td><td class="num">${r.mdd===null?"—":fmt(r.mdd,1)+"%"}</td></tr>`).join("");
+}
+function renderPX(){
+  if (!DATA){ $("pxTable").innerHTML="<tr><td>데이터 없음</td></tr>"; return; }
+  let h=`<tr><th>티커</th><th>이름</th><th>역할</th><th class="num">종가</th><th class="num">1일</th><th class="num">52주 고가</th><th class="num">역대 고가</th><th class="num">DD 역대</th><th class="num">DD 52주</th><th>기준일</th></tr>`;
+  for (const [sym,d] of Object.entries(DATA.tickers)){
+    if (d.error){ h+=`<tr><td>${esc(sym)}</td><td>${esc(d.name)}</td><td>${esc(d.role)}</td><td colspan="7">오류: ${esc(d.error)}</td></tr>`; continue; }
+    const f = v => d.ccy==="KRW" && sym!=="KRW=X" ? won(v) : (sym==="KRW=X"? fmt(v,2) : usd(v));
+    h+=`<tr><td><b>${esc(sym)}</b></td><td>${esc(d.name)}</td><td class="sub">${esc(d.role)}</td><td class="num">${f(d.close)}</td><td class="num ${d.chg_1d_pct>=0?"pos":"neg"}">${pct(d.chg_1d_pct)}</td><td class="num">${f(d.high_52w)}</td><td class="num">${f(d.ath)} <span class="sub">${d.ath_date}</span></td><td class="num"><b>${pct(d.dd_ath_pct)}</b></td><td class="num">${pct(d.dd_52w_pct)}</td><td>${d.date}</td></tr>`;
+  }
+  $("pxTable").innerHTML=h;
+}
+
+/* ───────────── 체크리스트 ───────────── */
+function renderCK(){
+  const state = LS.get("checks", {});
+  const build = (key, title) => `<div class="card-title" style="margin-bottom:6px">${title}</div>` + CHECK[key].map((grp,gi)=>{
+    const done = grp.items.filter((_,ii)=>state[`${key}-${gi}-${ii}`]).length;
+    return `<div class="ck-group"><h3><span>${esc(grp.g)}</span><span class="sub">${done}/${grp.items.length}</span></h3>`+
+      grp.items.map((it,ii)=>{const id=`${key}-${gi}-${ii}`;const c=!!state[id];return `<label class="ck ${c?"done":""}"><input type="checkbox" data-id="${id}" ${c?"checked":""}><span>${esc(it)}</span></label>`;}).join("")+`</div>`;
+  }).join("");
+  $("ckDC").innerHTML = build("dc","계좌 1 · DC 퇴직연금");
+  $("ckUS").innerHTML = build("us","계좌 2 · 미국 직투");
+  document.querySelectorAll("#p-ck input[type=checkbox]").forEach(cb=>cb.onchange=()=>{const s=LS.get("checks",{});s[cb.dataset.id]=cb.checked;LS.set("checks",s);renderCK();});
+}
+$("ckReset").onclick=()=>{ if(confirm("체크리스트를 모두 초기화할까요?")){LS.set("checks",{});renderCK();} };
+
+/* ───────────── 탭 ───────────── */
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.id==="p-"+b.dataset.tab));
+  LS.set("tab",b.dataset.tab);
+});
+const lastTab = LS.get("tab","dc"); const tb=document.querySelector(`.tab[data-tab="${lastTab}"]`); if(tb) tb.click();
+
+/* ───────────── 계산기 입력 저장 ───────────── */
+const INPUTS=["dcEntry","dcCur","dcAmt","usEntry","usCur","usQty"];
+function bindInputs(){
+  const saved = LS.get("inputs",{});
+  INPUTS.forEach(id=>{ if(saved[id]!==undefined && saved[id]!=="") $(id).value=saved[id]; });
+  $("usStage").checked = !!saved.usStage;
+  if (saved.dcEntry) $("dcCalc").open = true;
+  if (saved.usEntry) $("usCalc").open = true;
+  const save=()=>{const s={};INPUTS.forEach(id=>s[id]=$(id).value);s.usStage=$("usStage").checked;LS.set("inputs",s);renderDC();renderUS();};
+  [...INPUTS,"usStage"].forEach(id=>$(id).addEventListener("input",save));
+}
+function fillCurrentPlaceholders(){
+  const k=tk("381180.KS"), s=tk("SOXL");
+  if(k&&!k.error) $("dcCur").placeholder = k.close+" (자동)";
+  if(s&&!s.error) $("usCur").placeholder = s.close+" (자동)";
+}
+
+function renderAll(){
+  $("srcBadge").textContent = "데이터: "+SRC;
+  $("asof").textContent = "기준: "+(DATA ? (DATA.generated_at_kst || DATA.generated_at) : "—");
+  fillCurrentPlaceholders(); renderDC(); renderUS(); renderPX();
+}
+
+bindInputs(); renderBT(); renderCK(); renderAll();
+
+/* http(s)로 열린 경우 data.json이 더 최신이면 교체 (file:// 에서는 data.js 사용) */
+if (location.protocol.startsWith("http")){
+  fetch("data.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{
+    if (j && (!DATA || j.generated_at >= (DATA.generated_at||""))){ DATA=j; SRC="data.json"; renderAll(); }
+  }).catch(()=>{});
+}
+</script>
+</body>
+</html>
