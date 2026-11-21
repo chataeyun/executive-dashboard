@@ -1108,10 +1108,6 @@
     if (!host || !crisisData) return;
     var lev = crisisData.leverage_mix || {};
     var items = lev.items || [];
-    var maxPct = 0;
-    items.forEach(function (i) { maxPct = Math.max(maxPct, Number(i.pct) || 0); });
-    if (lev.extra) maxPct = Math.max(maxPct, Number(lev.extra.pct) || 0);
-    maxPct = maxPct || 100;
 
     var flow = lev.cashflow || {};
     var burden = flow.burden || {};
@@ -1130,8 +1126,8 @@
               '<span class="lev-tag cut">압축 ' + esc(lev.cut_pct) + "%</span>" +
             "</div>" +
           "</div>" +
-          '<div class="lev-rows">' + items.map(function (i) { return barRow(i, maxPct); }).join("") + "</div>" +
-          (lev.extra ? '<div class="lev-sep">별도 축</div><div class="lev-rows">' + barRow(lev.extra, maxPct) + "</div>" : "") +
+          '<div class="lev-rows">' + items.map(function (i) { return barRow(i, 100); }).join("") + "</div>" +
+          (lev.extra ? '<div class="lev-sep">별도 축</div><div class="lev-rows">' + barRow(lev.extra, 100) + "</div>" : "") +
           (lev.note ? '<p class="crisis-note">' + esc(lev.note) + "</p>" : "") +
         "</div>" +
         '<div class="lev-panel flow">' +
