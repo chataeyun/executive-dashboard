@@ -27,6 +27,7 @@ h2{font-size:18px;margin:28px 0 12px}
 h3{font-size:15px;margin:18px 0 8px;color:var(--ink-2)}
 .meta{color:var(--ink-3);font-size:13px}
 .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--border)}
+.badge.ok{color:var(--good);border-color:var(--good);background:transparent;font-weight:700}
 button,.btn{font:inherit;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:8px;padding:6px 12px}
 button:hover{border-color:var(--series)}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
@@ -119,7 +120,7 @@ footer{margin-top:40px;color:var(--ink-3);font-size:12px;text-align:center}
   <header>
     <div>
       <h1>📈 투자 전략 길라잡이</h1>
-      <div class="meta">DC 퇴직연금 「반도체 70 + 테크채권혼합 30 초장기 홀딩(매매 0회)」 · 미국 직투 「SOXL -80% 스나이퍼」 · 규칙 확정 2026-11-22</div>
+      <div class="meta">DC 퇴직연금 「반도체 70 + 테크채권혼합 30 초장기 홀딩(매매 0회)」 · 미국 직투 「SOXL 스나이퍼 + BRK-B·XLV·SCHD 각 1/3」 · 2계좌 최종 확정 2026-11-22</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <span class="badge" id="srcBadge">데이터: —</span>
@@ -134,7 +135,7 @@ footer{margin-top:40px;color:var(--ink-3);font-size:12px;text-align:center}
   <div class="grid2">
     <section class="card" id="cardDC">
       <div class="card-h">
-        <div><div class="card-title">계좌 1 · DC 퇴직연금</div><div class="sub">확정: 반도체 70% + 테크채권혼합 30% · 매매 0회 홀딩</div></div>
+        <div><div class="card-title">계좌 1 · DC 퇴직연금 <span class="badge ok" style="font-size:11px;vertical-align:2px;margin-left:2px">최종 확정</span></div><div class="sub">확정: 반도체 70% + 테크채권혼합 30% · 매매 0회 홀딩</div></div>
         <span class="status" id="dcStatus">—</span>
       </div>
       <div class="hero" id="dcDD">—<small>SOXX 참고 낙폭</small></div>
@@ -154,7 +155,7 @@ footer{margin-top:40px;color:var(--ink-3);font-size:12px;text-align:center}
 
     <section class="card" id="cardUS">
       <div class="card-h">
-        <div><div class="card-title">계좌 2 · 미국 직투</div><div class="sub">기준: SOXL 고점 대비 낙폭 · 진입 -80%</div></div>
+        <div><div class="card-title">계좌 2 · 미국 직투 <span class="badge ok" style="font-size:11px;vertical-align:2px;margin-left:2px">최종 확정</span></div><div class="sub">확정: BRK-B·XLV·SCHD 각 1/3 · SOXL -80% 진입</div></div>
         <span class="status" id="usStatus">—</span>
       </div>
       <div class="hero" id="usDD">—<small>SOXL 낙폭</small></div>
@@ -224,6 +225,12 @@ footer{margin-top:40px;color:var(--ink-3);font-size:12px;text-align:center}
     </div>
     <div class="note">ISA는 해외 ETF 직접 매수가 불가하므로 일반 해외주식 계좌에서 운용합니다. 배당세 15.4%, 해외주식 양도세 22%(연 250만원 기본공제, 다음 해 5월 신고).</div>
 
+    <h2>10년 세후 비교 <span class="badge ok">최종 확정</span> <span class="sub">2016-11-22 ~ 2026-11-20 · 1단위 기준 · 배당 15.4% · 양도세 22% 반영</span></h2>
+    <div class="legend"><span><i style="background:var(--series-strong)"></i>확정 전략</span><span><i style="background:var(--series)"></i>비교 전략</span><span><i style="background:var(--muted-bar)"></i>기준선</span></div>
+    <div class="bars" id="us10Bars"></div>
+    <div class="tbl-wrap"><table id="us10Table"></table></div>
+    <div class="warnbox">최종 확정은 <b>SOXL 스나이퍼 + BRK-B·XLV·SCHD(각 1/3)</b>입니다. 원조 방패(O·MOAT·SCHD)보다 10년 세후 <b>70.3배 vs 58.0배</b>로 앞섰고, QLD·QQQ 10년 장투보다 훨씬 큽니다. 대신 <b>최대 낙폭 -65.5%</b>는 어느 방패를 골라도 SOXL 공격 구간이 만듭니다(현재 -53% 구간 통과 중). 원칙은 <b>신용·대출 0원, 현물(여유현금)만 투입</b>입니다.</div>
+
     <h2>방패 6종 비교 <span class="sub">2021-01-04 ~ 2026-11-20 · 1단위 기준 · 세후(청산 기준)</span></h2>
     <div class="legend"><span><i style="background:var(--series-strong)"></i>채택 방패</span><span><i style="background:var(--series)"></i>비교 방패</span><span><i style="background:var(--muted-bar)"></i>기준선</span></div>
     <div class="bars" id="usBars"></div>
@@ -287,6 +294,13 @@ const BT_US = [
   {name:"커버드콜: JEPQ+JEPI+SCHD", v:13.49, cagr:55.7, mdd:null, kind:"var"},
   {name:"달러 파킹: SGOV", v:11.97, cagr:52.6, mdd:null, kind:"var"},
   {name:"QQQ 단순 보유 (세후)", v:2.17, cagr:14.2, mdd:-30.4, kind:"ref"}
+];
+/* 10년 세후 비교 — 직투 최종 확정 (2016-11-22 ~ 2026-11-20 · 1단위 기준 · 배당 15.4% · 양도세 22%) */
+const BT_US10 = [
+  {name:"확정: SOXL 스나이퍼 + BRK-B·XLV·SCHD(각 1/3)", v:70.3, gain:"+6,936%", cagr:53.1, mdd:-65.5, rec:295, kind:"best"},
+  {name:"비교: SOXL 스나이퍼 + O·MOAT·SCHD(각 1/3)", v:58.0, gain:"+5,702%", cagr:50.1, mdd:-65.5, rec:295, kind:"var"},
+  {name:"기준: QLD 10년 장투(2배·매매 0회)", v:10.7, gain:"+976%", cagr:26.8, mdd:-61.0, rec:796, kind:"ref"},
+  {name:"기준: QQQ 10년 장투(매매 0회)", v:5.1, gain:"+404%", cagr:17.6, mdd:-30.4, rec:549, kind:"ref"}
 ];
 const CHECK = {
   dcHold:[
@@ -439,6 +453,11 @@ function renderBT(){
   $("usTable").innerHTML = `<tr><th>순위</th><th>방패 구성</th><th class="num">세후 최종(배)</th><th class="num">세후 CAGR</th><th class="num">방패 MDD</th></tr>`+
     BT_US.map((r,i)=>`<tr class="${r.kind==="best"?"hl":""}"><td>${r.kind==="ref"?"기준":(i+1)+"위"}</td><td>${r.kind==="best"?"⭐ ":""}${esc(r.name)}</td><td class="num">${fmt(r.v,2)}배</td><td class="num">${fmt(r.cagr,1)}%</td><td class="num">${r.mdd===null?"—":fmt(r.mdd,1)+"%"}</td></tr>`).join("");
 }
+function renderUS10(){
+  bars($("us10Bars"), BT_US10, "배", r=>`<b>${esc(r.name)}</b><br>세후 ${fmt(r.v,1)}배 (${r.gain}) · CAGR ${fmt(r.cagr,1)}%<br>MDD ${fmt(r.mdd,1)}% · 최장 회복 ${r.rec}일`);
+  $("us10Table").innerHTML = `<tr><th>구분</th><th>전략</th><th class="num">세후 최종(배)</th><th class="num">누적 수익률</th><th class="num">세후 CAGR</th><th class="num">MDD</th><th class="num">최장 회복</th></tr>`+
+    BT_US10.map(r=>`<tr class="${r.kind==="best"?"hl":""}"><td>${r.kind==="best"?"⭐ 확정":r.kind==="ref"?"기준":"비교"}</td><td>${esc(r.name)}</td><td class="num"><b>${fmt(r.v,1)}배</b></td><td class="num">${r.gain}</td><td class="num">${fmt(r.cagr,1)}%</td><td class="num">${fmt(r.mdd,1)}%</td><td class="num">${r.rec}일</td></tr>`).join("");
+}
 function renderPX(){
   if (!DATA){ $("pxTable").innerHTML="<tr><td>데이터 없음</td></tr>"; return; }
   let h=`<tr><th>상품명</th><th>티커</th><th>역할</th><th class="num">종가</th><th class="num">1일</th><th class="num">52주 고가</th><th class="num">역대 고가</th><th class="num">DD 역대</th><th class="num">DD 52주</th><th>기준일</th></tr>`;
@@ -496,7 +515,7 @@ function renderAll(){
   fillCurrentPlaceholders(); renderDC(); renderUS(); renderPX();
 }
 
-bindInputs(); renderBT(); renderCK(); renderAll();
+bindInputs(); renderBT(); renderUS10(); renderCK(); renderAll();
 
 /* http(s)로 열린 경우 data.json이 더 최신이면 교체 (file:// 에서는 data.js 사용) */
 if (location.protocol.startsWith("http")){
