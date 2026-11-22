@@ -54,7 +54,7 @@ button:hover{border-color:var(--series)}
 .gauge .axis{position:absolute;top:26px;font-size:11px;color:var(--ink-3)}
 .action{background:var(--surface-2);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:6px}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px;margin-top:10px}
-.kv dt{color:var(--ink-3)} .kv dd{margin:0;font-variant-numeric:tabular-nums}
+.kv dt{color:var(--ink-3);max-width:15em;overflow-wrap:anywhere} .kv dd{margin:0;font-variant-numeric:tabular-nums}
 details.calc{margin-top:14px;border-top:1px dashed var(--border);padding-top:10px}
 details.calc summary{cursor:pointer;font-weight:600;font-size:14px}
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:10px}
@@ -188,7 +188,7 @@ footer{margin-top:40px;color:var(--ink-3);font-size:12px;text-align:center}
   <section class="panel active" id="p-dc">
     <h2>모드 전환 흐름</h2>
     <div class="flow">
-      <div class="node shield"><div class="nt">① 평시 · 방패 모드</div><div class="nb">배당 70 + 머니마켓 30</div>
+      <div class="node shield"><div class="nt">① 평시 · 방패 모드</div><div class="nb">배당 70 + 머니마켓액티브 30</div>
         <ul><li>TIGER 미국배당다우존스 70%</li><li>TIGER 머니마켓액티브 30%</li></ul></div>
       <div class="arrow"><b>→</b>SOXX<br>-40% 추천<br>(-35% 공격형)</div>
       <div class="node attack"><div class="nt">② 폭락장 · 공격 모드</div><div class="nb">반도체 70 + 나스닥혼합 30</div>
