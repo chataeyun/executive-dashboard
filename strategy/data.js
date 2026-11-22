@@ -1,12 +1,17 @@
 window.STRATEGY_DATA = {
-  "generated_at": "2026-11-21T22:11:51+09:00",
-  "generated_at_kst": "2026-11-21 22:11 KST",
+  "generated_at": "2026-11-22T10:55:00+09:00",
+  "generated_at_kst": "2026-11-22 10:55 KST",
   "rules": {
     "dc": {
-      "entry_sniper": -40.0,
-      "entry_aggr": -35.0,
-      "take_profit": 100.0,
-      "lock_days": 30
+      "mode": "hold",
+      "risk_weight": 70,
+      "safe_weight": 30,
+      "equity_effective": 85,
+      "trades": 0,
+      "dc_products": {
+        "risk": "TIGER 미국필라델피아반도체나스닥",
+        "safe": "TIGER 미국테크TOP10채권혼합"
+      }
     },
     "us": {
       "entry": -80.0,
@@ -21,7 +26,7 @@ window.STRATEGY_DATA = {
     "SOXX": {
       "name": "iShares Semiconductor ETF",
       "ccy": "USD",
-      "role": "DC 진입 기준 지표",
+      "role": "DC 참고 지표(낙폭) — 매매 신호 아님",
       "symbol": "SOXX",
       "date": "2026-11-20",
       "close": 123.4,
@@ -90,7 +95,7 @@ window.STRATEGY_DATA = {
     "381180.KS": {
       "name": "TIGER 미국필라델피아반도체나스닥",
       "ccy": "KRW",
-      "role": "DC 공격 위험자산 70%",
+      "role": "DC 위험자산 70% (반도체)",
       "symbol": "381180.KS",
       "date": "2026-11-20",
       "close": 31975.0,
@@ -113,7 +118,7 @@ window.STRATEGY_DATA = {
     "458730.KS": {
       "name": "TIGER 미국배당다우존스",
       "ccy": "KRW",
-      "role": "DC 방패 위험자산 70%",
+      "role": "비교: 방패형 위험자산(배당)",
       "symbol": "458730.KS",
       "date": "2026-11-20",
       "close": 14505.0,
@@ -136,7 +141,7 @@ window.STRATEGY_DATA = {
     "435420.KS": {
       "name": "TIGER 미국나스닥100채권혼합50",
       "ccy": "KRW",
-      "role": "DC 공격 안전자산 30%",
+      "role": "비교: 안전자산 30% 대안",
       "symbol": "435420.KS",
       "date": "2026-11-20",
       "close": 13210.0,
@@ -252,18 +257,30 @@ window.STRATEGY_DATA = {
   "signals": {
     "dc": {
       "account": "DC 퇴직연금",
-      "indicator": "SOXX 전고점 대비 낙폭",
+      "indicator": "SOXX 전고점 대비 낙폭(참고)",
       "dd_pct": -43.48,
-      "gap_to_sniper_pct": -3.48,
-      "gap_to_aggr_pct": -8.48,
-      "soxx_trigger_sniper": 131.0,
-      "soxx_trigger_aggr": 141.92,
-      "mode": "방패",
-      "first_cross_sniper": "2026-11-20",
-      "first_cross_aggr": "2026-11-05",
-      "status": "[공격 진입 신호!]",
-      "level": "추천 스나이퍼선(-40%) 도달",
-      "action": "TIGER 미국배당다우존스·TIGER 머니마켓액티브 전액 매도 → TIGER 미국필라델피아반도체나스닥 70% + TIGER 미국나스닥100채권혼합50 30% 매수"
+      "mode": "홀딩",
+      "status": "[확정 비중 홀딩]",
+      "level": "매매 0회",
+      "weights": {
+        "risk": 70,
+        "safe": 30,
+        "equity_effective": 85
+      },
+      "products": {
+        "risk": "TIGER 미국필라델피아반도체나스닥",
+        "safe": "TIGER 미국테크TOP10채권혼합"
+      },
+      "action": "위험 70% TIGER 미국필라델피아반도체나스닥 + 안전 30% TIGER 미국테크TOP10채권혼합 유지. 납입금만 같은 비중으로 추가 매수, 매도·스위칭 없음.",
+      "backtest_10y": {
+        "start": "2016-11-22",
+        "end": "2026-11-20",
+        "multiple": 8.47,
+        "return_pct": 747,
+        "cagr_pct": 23.8,
+        "mdd_pct": -48.7
+      },
+      "confirmed_at": "2026-11-22"
     },
     "us": {
       "account": "미국 직투",
