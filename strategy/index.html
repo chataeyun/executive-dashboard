@@ -289,7 +289,7 @@ const BT_US = [
   {name:"QQQ 단순 보유 (세후)", v:2.17, cagr:14.2, mdd:-30.4, kind:"ref"}
 ];
 const CHECK = {
-  dc:[
+  dcHold:[
     {g:"확정 비중 · 매수 1회", items:["위험자산 70% TIGER 미국필라델피아반도체나스닥 + 안전자산 30% TIGER 미국테크TOP10채권혼합으로 매수 (매수는 1회)","실질 주식 비중 85% 확인 (테크채권혼합 내부: 빅테크 50% + 국고채 50%, 자체 리밸런싱)","이후 납입금은 같은 70:30 비중으로 추가 매수만"]},
     {g:"기존 채권 정리 (선택)", items:["RISE 국고채30년 · ACE 미국30년국채(H) 평가손실분 확인","손실분만 3~4회 분할 교체 (하루에 몰아 손실 확정하지 않음)","이익 구간 잔량은 세금·수수료 보고 따로 판단"]},
     {g:"홀딩 · 점검 (매매 0회)", items:["월 1회 70:30 비중 확인 — 리밸런싱은 하지 않고 기록만","낙폭 지표는 참고용: -40%·-50%가 와도 매도·스위칭하지 않음","과세이연 확인: 계좌 내 매매에 배당세·양도세 0원 (수령 시 연금소득세는 발생)","분기 1회 수익률 기록 — 판단 근거는 이 화면과 플레이북 §2-6"]}
@@ -460,7 +460,7 @@ function renderCK(){
     return `<div class="ck-group"><h3><span>${esc(grp.g)}</span><span class="sub">${done}/${grp.items.length}</span></h3>`+
       grp.items.map((it,ii)=>{const id=`${key}-${gi}-${ii}`;const c=!!state[id];return `<label class="ck ${c?"done":""}"><input type="checkbox" data-id="${id}" ${c?"checked":""}><span>${esc(it)}</span></label>`;}).join("")+`</div>`;
   }).join("");
-  $("ckDC").innerHTML = build("dc","계좌 1 · DC 퇴직연금");
+  $("ckDC").innerHTML = build("dcHold","계좌 1 · DC 퇴직연금");
   $("ckUS").innerHTML = build("us","계좌 2 · 미국 직투");
   document.querySelectorAll("#p-ck input[type=checkbox]").forEach(cb=>cb.onchange=()=>{const s=LS.get("checks",{});s[cb.dataset.id]=cb.checked;LS.set("checks",s);renderCK();});
 }
