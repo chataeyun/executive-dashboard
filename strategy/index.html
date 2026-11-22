@@ -77,6 +77,7 @@ input[type=number]{font:inherit;padding:7px 9px;border-radius:8px;border:1px sol
 .node .nb{font-weight:700;margin:2px 0}
 .node ul{margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2)}
 .arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:86px;font-size:12px;color:var(--ink-2);text-align:center}
+.arrow.wide{min-width:150px}
 .arrow b{font-size:20px;color:var(--ink-3);line-height:1}
 @media (max-width:720px){.flow{flex-direction:column}.arrow{min-width:0;flex-direction:row;gap:8px}.arrow b{transform:rotate(90deg)}}
 /* tables */
@@ -85,6 +86,8 @@ table{border-collapse:collapse;width:100%;font-size:13.5px}
 th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
 th{color:var(--ink-3);font-weight:600;font-size:12px;background:var(--surface-2)}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.prod{white-space:normal;min-width:150px;max-width:240px;line-height:1.35}
+td.tk{color:var(--ink-3);font-size:12px}
 tr.hl td{font-weight:700}
 tr:last-child td{border-bottom:none}
 /* bar chart (single series) */
@@ -139,10 +142,10 @@ footer{margin-top:40px;color:var(--ink-3);font-size:12px;text-align:center}
       <div class="action" id="dcAction">—</div>
       <dl class="kv" id="dcKV"></dl>
       <details class="calc" id="dcCalc">
-        <summary>🧮 공격 모드 보유 중? 381180 평단 입력 → 수익률·익절가 계산</summary>
+        <summary>🧮 공격 모드 보유 중? TIGER 미국필라델피아반도체나스닥 평단 입력 → 수익률·익절가 계산</summary>
         <div class="form">
-          <label>381180 공격 평단(원)<input type="number" id="dcEntry" min="0" step="5" placeholder="예: 31975"></label>
-          <label>381180 현재가(원)<input type="number" id="dcCur" min="0" step="5"></label>
+          <label>TIGER 미국필라델피아반도체나스닥 평단(원)<input type="number" id="dcEntry" min="0" step="5" placeholder="예: 31975"></label>
+          <label>TIGER 미국필라델피아반도체나스닥 현재가(원)<input type="number" id="dcCur" min="0" step="5"></label>
           <label>DC 평가금액(원, 선택)<input type="number" id="dcAmt" min="0" step="10000" placeholder="예: 100000000"></label>
         </div>
         <div class="calc-out" id="dcOut"></div>
@@ -186,11 +189,11 @@ footer{margin-top:40px;color:var(--ink-3);font-size:12px;text-align:center}
     <h2>모드 전환 흐름</h2>
     <div class="flow">
       <div class="node shield"><div class="nt">① 평시 · 방패 모드</div><div class="nb">배당 70 + 머니마켓 30</div>
-        <ul><li>TIGER 미국배당다우존스 (458730) 70%</li><li>TIGER 머니마켓액티브 30%</li></ul></div>
+        <ul><li>TIGER 미국배당다우존스 70%</li><li>TIGER 머니마켓액티브 30%</li></ul></div>
       <div class="arrow"><b>→</b>SOXX<br>-40% 추천<br>(-35% 공격형)</div>
       <div class="node attack"><div class="nt">② 폭락장 · 공격 모드</div><div class="nb">반도체 70 + 나스닥혼합 30</div>
-        <ul><li>TIGER 미국필라델피아반도체나스닥 (381180) 70%</li><li>TIGER 미국나스닥100채권혼합50 (435420) 30%</li><li>실질 주식 비중 85%</li></ul></div>
-      <div class="arrow"><b>→</b>381180<br>매수가 대비<br>+100%</div>
+        <ul><li>TIGER 미국필라델피아반도체나스닥 70%</li><li>TIGER 미국나스닥100채권혼합50 30%</li><li>실질 주식 비중 85%</li></ul></div>
+      <div class="arrow wide"><b>→</b>TIGER 미국필라델피아반도체나스닥<br>매수가 대비<br>+100%</div>
       <div class="node tp"><div class="nt">③ 익절 · 방패 복귀</div><div class="nb">①로 전액 복귀</div>
         <ul><li>30거래일 재진입 잠금</li><li>세금 0% (과세이연)</li></ul></div>
     </div>
@@ -253,7 +256,16 @@ footer{margin-top:40px;color:var(--ink-3);font-size:12px;text-align:center}
 <script>
 "use strict";
 /* ───────────── 내장 기본값 (2026-11-20 종가 실측치) ───────────── */
-const DEFAULT_DATA = {"generated_at":"2026-11-21T22:11:51+09:00","generated_at_kst":"2026-11-21 22:11 KST","rules":{"dc":{"entry_sniper":-40.0,"entry_aggr":-35.0,"take_profit":100.0,"lock_days":30},"us":{"entry":-80.0,"tp1":300.0,"tp1_sell_ratio":0.7,"tp2":400.0,"tp2_sell_ratio":0.3,"lock_days":60}},"tickers":{"SOXX":{"name":"iShares Semiconductor ETF","ccy":"USD","role":"DC 진입 기준 지표","symbol":"SOXX","date":"2026-11-20","close":123.4,"chg_1d_pct":-10.55,"high_52w":218.3367,"high_52w_date":"2026-06-22","ath":218.3367,"ath_date":"2026-06-22","dd_ath_pct":-43.48,"dd_52w_pct":-43.48,"history_start":"2001-07-13","first_cross":{"-30":"2026-11-02","-35":"2026-11-05","-40":"2026-11-20","-70":null,"-80":null}},"SOXL":{"name":"Direxion Semi Bull 3X","ccy":"USD","role":"직투 공격 자산 / 진입 지표","symbol":"SOXL","date":"2026-11-20","close":30.88,"chg_1d_pct":-31.83,"high_52w":300.77,"high_52w_date":"2026-06-22","ath":300.77,"ath_date":"2026-06-22","dd_ath_pct":-89.73,"dd_52w_pct":-89.73,"history_start":"2010-03-11","first_cross":{"-30":"2026-07-02","-35":"2026-07-02","-40":"2026-07-07","-70":"2026-10-22","-80":"2026-11-05"}},"TQQQ":{"name":"ProShares UltraPro QQQ","ccy":"USD","role":"참고 지표","symbol":"TQQQ","date":"2026-11-20","close":41.2,"chg_1d_pct":-15.94,"high_52w":87.22,"high_52w_date":"2026-06-02","ath":87.22,"ath_date":"2026-06-02","dd_ath_pct":-52.76,"dd_52w_pct":-52.76,"history_start":"2010-02-11","first_cross":{"-30":"2026-07-29","-35":"2026-11-05","-40":"2026-11-05","-70":null,"-80":null}},"381180.KS":{"name":"TIGER 미국필라델피아반도체나스닥","ccy":"KRW","role":"DC 공격 위험자산 70%","symbol":"381180.KS","date":"2026-11-20","close":31975.0,"chg_1d_pct":-6.94,"high_52w":57815.0,"high_52w_date":"2026-06-22","ath":57815.0,"ath_date":"2026-06-22","dd_ath_pct":-44.69,"dd_52w_pct":-44.69,"history_start":"2021-04-09","first_cross":{"-30":"2026-07-30","-35":"2026-10-26","-40":"2026-11-06","-70":null,"-80":null}},"458730.KS":{"name":"TIGER 미국배당다우존스","ccy":"KRW","role":"DC 방패 위험자산 70%","symbol":"458730.KS","date":"2026-11-20","close":14505.0,"chg_1d_pct":-0.82,"high_52w":15880.0,"high_52w_date":"2026-06-05","ath":15880.0,"ath_date":"2026-06-05","dd_ath_pct":-8.66,"dd_52w_pct":-8.66,"history_start":"2023-06-20","first_cross":{"-30":null,"-35":null,"-40":null,"-70":null,"-80":null}},"435420.KS":{"name":"TIGER 미국나스닥100채권혼합50","ccy":"KRW","role":"DC 공격 안전자산 30%","symbol":"435420.KS","date":"2026-11-20","close":13210.0,"chg_1d_pct":-1.71,"high_52w":15090.0,"high_52w_date":"2026-07-01","ath":15090.0,"ath_date":"2026-07-01","dd_ath_pct":-12.46,"dd_52w_pct":-12.46,"history_start":"2022-07-06","first_cross":{"-30":null,"-35":null,"-40":null,"-70":null,"-80":null}},"BRK-B":{"name":"Berkshire Hathaway B","ccy":"USD","role":"직투 방패 1/3","symbol":"BRK-B","date":"2026-11-20","close":570.0,"chg_1d_pct":-0.36,"high_52w":592.94,"high_52w_date":"2026-11-13","ath":592.94,"ath_date":"2026-11-13","dd_ath_pct":-3.87,"dd_52w_pct":-3.87,"history_start":"1996-05-09","first_cross":{"-30":null,"-35":null,"-40":null,"-70":null,"-80":null}},"XLV":{"name":"Health Care Select SPDR","ccy":"USD","role":"직투 방패 1/3","symbol":"XLV","date":"2026-11-20","close":177.24,"chg_1d_pct":-0.12,"high_52w":189.66,"high_52w_date":"2026-11-04","ath":189.66,"ath_date":"2026-11-04","dd_ath_pct":-6.55,"dd_52w_pct":-6.55,"history_start":"1998-12-22","first_cross":{"-30":null,"-35":null,"-40":null,"-70":null,"-80":null}},"SCHD":{"name":"Schwab US Dividend Equity","ccy":"USD","role":"직투 방패 1/3","symbol":"SCHD","date":"2026-11-20","close":33.94,"chg_1d_pct":-0.76,"high_52w":36.21,"high_52w_date":"2026-11-04","ath":36.21,"ath_date":"2026-11-04","dd_ath_pct":-6.27,"dd_52w_pct":-6.27,"history_start":"2011-10-20","first_cross":{"-30":null,"-35":null,"-40":null,"-70":null,"-80":null}},"KRW=X":{"name":"USD/KRW 환율","ccy":"KRW","role":"환율","symbol":"KRW=X","date":"2026-11-20","close":1334.79,"chg_1d_pct":0.33,"high_52w":1554.48,"high_52w_date":"2026-06-08","ath":1571.4,"ath_date":"2009-03-02","dd_ath_pct":-15.06,"dd_52w_pct":-14.13,"history_start":"2003-12-01","first_cross":{"-30":"2010-04-26","-35":"2014-05-19","-40":null,"-70":null,"-80":null}}},"signals":{"dc":{"account":"DC 퇴직연금","indicator":"SOXX 전고점 대비 낙폭","dd_pct":-43.48,"gap_to_sniper_pct":-3.48,"gap_to_aggr_pct":-8.48,"soxx_trigger_sniper":131.0,"soxx_trigger_aggr":141.92,"mode":"방패","first_cross_sniper":"2026-11-20","first_cross_aggr":"2026-11-05","status":"[공격 진입 신호!]","level":"추천 스나이퍼선(-40%) 도달","action":"458730 + 머니마켓 전액 매도 → 381180 70% + 435420 30% 매수"},"us":{"account":"미국 직투","indicator":"SOXL 전고점 대비 낙폭","dd_pct":-89.73,"gap_to_entry_pct":-9.73,"soxl_trigger_price":60.15,"mode":"방패","first_cross_entry":"2026-11-05","status":"[공격 진입 신호!]","level":"-80% 도달","action":"BRK-B/XLV/SCHD 전액 매도 → SOXL 100% 매수 (직전 양도세 납부분 별도 유보)"}}};
+const DEFAULT_DATA = {"generated_at":"2026-11-21T22:11:51+09:00","generated_at_kst":"2026-11-21 22:11 KST","rules":{"dc":{"entry_sniper":-40.0,"entry_aggr":-35.0,"take_profit":100.0,"lock_days":30},"us":{"entry":-80.0,"tp1":300.0,"tp1_sell_ratio":0.7,"tp2":400.0,"tp2_sell_ratio":0.3,"lock_days":60}},"tickers":{"SOXX":{"name":"iShares Semiconductor ETF","ccy":"USD","role":"DC 진입 기준 지표","symbol":"SOXX","date":"2026-11-20","close":123.4,"chg_1d_pct":-10.55,"high_52w":218.3367,"high_52w_date":"2026-06-22","ath":218.3367,"ath_date":"2026-06-22","dd_ath_pct":-43.48,"dd_52w_pct":-43.48,"history_start":"2001-07-13","first_cross":{"-30":"2026-11-02","-35":"2026-11-05","-40":"2026-11-20","-70":null,"-80":null}},"SOXL":{"name":"Direxion Semi Bull 3X","ccy":"USD","role":"직투 공격 자산 / 진입 지표","symbol":"SOXL","date":"2026-11-20","close":30.88,"chg_1d_pct":-31.83,"high_52w":300.77,"high_52w_date":"2026-06-22","ath":300.77,"ath_date":"2026-06-22","dd_ath_pct":-89.73,"dd_52w_pct":-89.73,"history_start":"2010-03-11","first_cross":{"-30":"2026-07-02","-35":"2026-07-02","-40":"2026-07-07","-70":"2026-10-22","-80":"2026-11-05"}},"TQQQ":{"name":"ProShares UltraPro QQQ","ccy":"USD","role":"참고 지표","symbol":"TQQQ","date":"2026-11-20","close":41.2,"chg_1d_pct":-15.94,"high_52w":87.22,"high_52w_date":"2026-06-02","ath":87.22,"ath_date":"2026-06-02","dd_ath_pct":-52.76,"dd_52w_pct":-52.76,"history_start":"2010-02-11","first_cross":{"-30":"2026-07-29","-35":"2026-11-05","-40":"2026-11-05","-70":null,"-80":null}},"381180.KS":{"name":"TIGER 미국필라델피아반도체나스닥","ccy":"KRW","role":"DC 공격 위험자산 70%","symbol":"381180.KS","date":"2026-11-20","close":31975.0,"chg_1d_pct":-6.94,"high_52w":57815.0,"high_52w_date":"2026-06-22","ath":57815.0,"ath_date":"2026-06-22","dd_ath_pct":-44.69,"dd_52w_pct":-44.69,"history_start":"2021-04-09","first_cross":{"-30":"2026-07-30","-35":"2026-10-26","-40":"2026-11-06","-70":null,"-80":null}},"458730.KS":{"name":"TIGER 미국배당다우존스","ccy":"KRW","role":"DC 방패 위험자산 70%","symbol":"458730.KS","date":"2026-11-20","close":14505.0,"chg_1d_pct":-0.82,"high_52w":15880.0,"high_52w_date":"2026-06-05","ath":15880.0,"ath_date":"2026-06-05","dd_ath_pct":-8.66,"dd_52w_pct":-8.66,"history_start":"2023-06-20","first_cross":{"-30":null,"-35":null,"-40":null,"-70":null,"-80":null}},"435420.KS":{"name":"TIGER 미국나스닥100채권혼합50","ccy":"KRW","role":"DC 공격 안전자산 30%","symbol":"435420.KS","date":"2026-11-20","close":13210.0,"chg_1d_pct":-1.71,"high_52w":15090.0,"high_52w_date":"2026-07-01","ath":15090.0,"ath_date":"2026-07-01","dd_ath_pct":-12.46,"dd_52w_pct":-12.46,"history_start":"2022-07-06","first_cross":{"-30":null,"-35":null,"-40":null,"-70":null,"-80":null}},"BRK-B":{"name":"Berkshire Hathaway B","ccy":"USD","role":"직투 방패 1/3","symbol":"BRK-B","date":"2026-11-20","close":570.0,"chg_1d_pct":-0.36,"high_52w":592.94,"high_52w_date":"2026-11-13","ath":592.94,"ath_date":"2026-11-13","dd_ath_pct":-3.87,"dd_52w_pct":-3.87,"history_start":"1996-05-09","first_cross":{"-30":null,"-35":null,"-40":null,"-70":null,"-80":null}},"XLV":{"name":"Health Care Select SPDR","ccy":"USD","role":"직투 방패 1/3","symbol":"XLV","date":"2026-11-20","close":177.24,"chg_1d_pct":-0.12,"high_52w":189.66,"high_52w_date":"2026-11-04","ath":189.66,"ath_date":"2026-11-04","dd_ath_pct":-6.55,"dd_52w_pct":-6.55,"history_start":"1998-12-22","first_cross":{"-30":null,"-35":null,"-40":null,"-70":null,"-80":null}},"SCHD":{"name":"Schwab US Dividend Equity","ccy":"USD","role":"직투 방패 1/3","symbol":"SCHD","date":"2026-11-20","close":33.94,"chg_1d_pct":-0.76,"high_52w":36.21,"high_52w_date":"2026-11-04","ath":36.21,"ath_date":"2026-11-04","dd_ath_pct":-6.27,"dd_52w_pct":-6.27,"history_start":"2011-10-20","first_cross":{"-30":null,"-35":null,"-40":null,"-70":null,"-80":null}},"KRW=X":{"name":"USD/KRW 환율","ccy":"KRW","role":"환율","symbol":"KRW=X","date":"2026-11-20","close":1334.79,"chg_1d_pct":0.33,"high_52w":1554.48,"high_52w_date":"2026-06-08","ath":1571.4,"ath_date":"2009-03-02","dd_ath_pct":-15.06,"dd_52w_pct":-14.13,"history_start":"2003-12-01","first_cross":{"-30":"2010-04-26","-35":"2014-05-19","-40":null,"-70":null,"-80":null}}},"signals":{"dc":{"account":"DC 퇴직연금","indicator":"SOXX 전고점 대비 낙폭","dd_pct":-43.48,"gap_to_sniper_pct":-3.48,"gap_to_aggr_pct":-8.48,"soxx_trigger_sniper":131.0,"soxx_trigger_aggr":141.92,"mode":"방패","first_cross_sniper":"2026-11-20","first_cross_aggr":"2026-11-05","status":"[공격 진입 신호!]","level":"추천 스나이퍼선(-40%) 도달","action":"TIGER 미국배당다우존스·TIGER 머니마켓액티브 전액 매도 → TIGER 미국필라델피아반도체나스닥 70% + TIGER 미국나스닥100채권혼합50 30% 매수"},"us":{"account":"미국 직투","indicator":"SOXL 전고점 대비 낙폭","dd_pct":-89.73,"gap_to_entry_pct":-9.73,"soxl_trigger_price":60.15,"mode":"방패","first_cross_entry":"2026-11-05","status":"[공격 진입 신호!]","level":"-80% 도달","action":"BRK-B/XLV/SCHD 전액 매도 → SOXL 100% 매수 (직전 양도세 납부분 별도 유보)"}}};
+
+/* ───────────── 상품명 (숫자 티커 대신 화면에 표기) ───────────── */
+const NAME = {
+  semi:"TIGER 미국필라델피아반도체나스닥",
+  div :"TIGER 미국배당다우존스",
+  mix :"TIGER 미국나스닥100채권혼합50",
+  mm  :"TIGER 머니마켓액티브",
+  ndx :"TIGER 미국나스닥100"
+};
 
 /* ───────────── 확정 규칙 ───────────── */
 const RULES = {
@@ -278,9 +290,9 @@ const BT_US = [
 ];
 const CHECK = {
   dc:[
-    {g:"평시 · 방패", items:["458730 70% / 머니마켓 30% 비중 확인 (월 1회)","장기국채 2종 잔량 → 머니마켓으로 분할 교체","브리핑으로 SOXX 낙폭 확인 (주 1회, -30% 이하면 매일)"]},
-    {g:"진입 · 공격 전환", items:["SOXX 종가 -40%(추천) / -35%(공격형) 도달 확인","마지막 익절 후 30거래일 경과 확인","458730 + 머니마켓 전액 매도 (결제일 확인)","381180 70% + 435420 30% 매수","381180 평단 기록 → 익절가 = 평단 × 2"]},
-    {g:"익절 · 방패 복귀", items:["381180 ≥ 평단 × 2 확인","381180 + 435420 전액 매도 → 458730 70% + 머니마켓 30%","익절일 기록 → 30거래일 잠금 시작"]}
+    {g:"평시 · 방패", items:["TIGER 미국배당다우존스 70% / TIGER 머니마켓액티브 30% 비중 확인 (월 1회)","장기국채 2종 잔량 → TIGER 머니마켓액티브로 분할 교체","브리핑으로 SOXX 낙폭 확인 (주 1회, -30% 이하면 매일)"]},
+    {g:"진입 · 공격 전환", items:["SOXX 종가 -40%(추천) / -35%(공격형) 도달 확인","마지막 익절 후 30거래일 경과 확인","TIGER 미국배당다우존스·TIGER 머니마켓액티브 전액 매도 (결제일 확인)","TIGER 미국필라델피아반도체나스닥 70% + TIGER 미국나스닥100채권혼합50 30% 매수","TIGER 미국필라델피아반도체나스닥 평단 기록 → 익절가 = 평단 × 2"]},
+    {g:"익절 · 방패 복귀", items:["TIGER 미국필라델피아반도체나스닥 ≥ 평단 × 2 확인","TIGER 미국필라델피아반도체나스닥·TIGER 미국나스닥100채권혼합50 전액 매도 → TIGER 미국배당다우존스 70% + TIGER 머니마켓액티브 30%","익절일 기록 → 30거래일 잠금 시작"]}
   ],
   us:[
     {g:"평시 · 방패", items:["BRK-B / XLV / SCHD 1/3 비중 확인 (분기 1회, ±5%p 이탈 시 리밸런싱)","직전 사이클 양도세 납부 예정액 별도 현금 유보 확인","SOXL 낙폭 확인 (-70% 이하면 매일)"]},
@@ -351,22 +363,22 @@ function renderDC(){
             ["진입 트리거가", `${usd(s.ath*(1+R.entrySniper/100))} (-40%) · ${usd(s.ath*(1+R.entryAggr/100))} (-35%)`]);
     if (s.first_cross && s.first_cross["-35"]) kv.push(["이번 하락 최초 이탈", `-35% ${s.first_cross["-35"]} · -40% ${s.first_cross["-40"]||"미도달"}`]);
   }
-  if (k && !k.error) kv.push(["381180 종가", won(k.close)+` (고점 대비 ${pct(k.dd_ath_pct)})`]);
+  if (k && !k.error) kv.push([NAME.semi+" 종가", won(k.close)+` (고점 대비 ${pct(k.dd_ath_pct)})`]);
 
   if (entry>0){
     const ret = (cur/entry-1)*100, target = entry*(1+R.tp/100);
-    if (ret >= R.tp){ setStatus($("dcStatus"),"sell"); $("dcAction").innerHTML = `<b>381180 + 435420 전량 매도 → 458730 70% + 머니마켓 30% 복귀.</b> 이후 ${R.lock}거래일 동안 재진입하지 않습니다.`; }
+    if (ret >= R.tp){ setStatus($("dcStatus"),"sell"); $("dcAction").innerHTML = `<b>${NAME.semi}·${NAME.mix} 전량 매도 → ${NAME.div} 70% + ${NAME.mm} 30% 복귀.</b> 이후 ${R.lock}거래일 동안 재진입하지 않습니다.`; }
     else { setStatus($("dcStatus"),"wait"); $("dcAction").innerHTML = `공격 포지션 유지 · 익절 목표가 <b>${won(target)}</b> (현재 대비 ${pct((target/cur-1)*100,1)})`; }
     let out = [["현재 수익률",pct(ret),ret>=0?"pos":"neg"],["익절 목표가 (+100%)",won(target)],["목표까지",pct((target/cur-1)*100,1)]];
     if (amt>0){ out.push(["익절 시 위험 70%",won(amt*(1+ret/100)*0.7)],["안전 30%",won(amt*(1+ret/100)*0.3)]); }
     $("dcOut").innerHTML = out.map(o=>`<div class="mini"><div class="l">${o[0]}</div><div class="v ${o[2]||""}">${o[1]}</div></div>`).join("");
   } else {
-    $("dcOut").innerHTML = amt>0 ? `<div class="mini"><div class="l">진입 시 381180 (70%)</div><div class="v">${won(amt*0.7)}</div></div><div class="mini"><div class="l">진입 시 435420 (30%)</div><div class="v">${won(amt*0.3)}</div></div>` : "";
+    $("dcOut").innerHTML = amt>0 ? `<div class="mini"><div class="l">진입 시 ${NAME.semi} (70%)</div><div class="v">${won(amt*0.7)}</div></div><div class="mini"><div class="l">진입 시 ${NAME.mix} (30%)</div><div class="v">${won(amt*0.3)}</div></div>` : "";
     if (dd===null){ setStatus($("dcStatus"),"na"); $("dcAction").textContent="시세 데이터가 없습니다. strategy_briefing.py를 실행하세요."; }
-    else if (dd <= R.entrySniper){ setStatus($("dcStatus"),"attack"); $("dcAction").innerHTML = `<b>추천선(-40%) 도달.</b> 458730 + 머니마켓 전액 매도 → <b>381180 70% + 435420 30%</b> 매수. 매수 평단을 아래 계산기에 기록하세요.`; }
+    else if (dd <= R.entrySniper){ setStatus($("dcStatus"),"attack"); $("dcAction").innerHTML = `<b>추천선(-40%) 도달.</b> ${NAME.div}·${NAME.mm} 전액 매도 → <b>${NAME.semi} 70% + ${NAME.mix} 30%</b> 매수. 매수 평단을 아래 계산기에 기록하세요.`; }
     else if (dd <= R.entryAggr){ setStatus($("dcStatus"),"aggr","공격형선(-35%) 도달"); $("dcAction").innerHTML = `공격형이면 지금 진입하고, 스나이퍼형(추천)이면 <b>-40%</b>까지 기다립니다.`; }
     else if (dd <= -30){ setStatus($("dcStatus"),"watch"); $("dcAction").innerHTML = `진입선까지 ${fmt(dd-R.entryAggr,1)}%p 남았습니다. 낙폭을 매일 확인하세요.`; }
-    else { setStatus($("dcStatus"),"shield"); $("dcAction").innerHTML = `458730 70% + TIGER 머니마켓액티브 30% 유지 (진입선까지 ${fmt(dd-R.entryAggr,1)}%p).`; }
+    else { setStatus($("dcStatus"),"shield"); $("dcAction").innerHTML = `${NAME.div} 70% + ${NAME.mm} 30% 유지 (진입선까지 ${fmt(dd-R.entryAggr,1)}%p).`; }
   }
   $("dcKV").innerHTML = kv.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("");
 }
@@ -432,11 +444,13 @@ function renderBT(){
 }
 function renderPX(){
   if (!DATA){ $("pxTable").innerHTML="<tr><td>데이터 없음</td></tr>"; return; }
-  let h=`<tr><th>티커</th><th>이름</th><th>역할</th><th class="num">종가</th><th class="num">1일</th><th class="num">52주 고가</th><th class="num">역대 고가</th><th class="num">DD 역대</th><th class="num">DD 52주</th><th>기준일</th></tr>`;
+  let h=`<tr><th>상품명</th><th>티커</th><th>역할</th><th class="num">종가</th><th class="num">1일</th><th class="num">52주 고가</th><th class="num">역대 고가</th><th class="num">DD 역대</th><th class="num">DD 52주</th><th>기준일</th></tr>`;
   for (const [sym,d] of Object.entries(DATA.tickers)){
-    if (d.error){ h+=`<tr><td>${esc(sym)}</td><td>${esc(d.name)}</td><td>${esc(d.role)}</td><td colspan="7">오류: ${esc(d.error)}</td></tr>`; continue; }
+    const code = sym.replace(".KS","");
+    const nm = d.name || code;
+    if (d.error){ h+=`<tr><td class="prod">${esc(nm)}</td><td class="tk">${esc(code)}</td><td>${esc(d.role)}</td><td colspan="7">오류: ${esc(d.error)}</td></tr>`; continue; }
     const f = v => d.ccy==="KRW" && sym!=="KRW=X" ? won(v) : (sym==="KRW=X"? fmt(v,2) : usd(v));
-    h+=`<tr><td><b>${esc(sym)}</b></td><td>${esc(d.name)}</td><td class="sub">${esc(d.role)}</td><td class="num">${f(d.close)}</td><td class="num ${d.chg_1d_pct>=0?"pos":"neg"}">${pct(d.chg_1d_pct)}</td><td class="num">${f(d.high_52w)}</td><td class="num">${f(d.ath)} <span class="sub">${d.ath_date}</span></td><td class="num"><b>${pct(d.dd_ath_pct)}</b></td><td class="num">${pct(d.dd_52w_pct)}</td><td>${d.date}</td></tr>`;
+    h+=`<tr><td class="prod"><b>${esc(nm)}</b></td><td class="tk">${esc(code)}</td><td class="sub">${esc(d.role)}</td><td class="num">${f(d.close)}</td><td class="num ${d.chg_1d_pct>=0?"pos":"neg"}">${pct(d.chg_1d_pct)}</td><td class="num">${f(d.high_52w)}</td><td class="num">${f(d.ath)} <span class="sub">${d.ath_date}</span></td><td class="num"><b>${pct(d.dd_ath_pct)}</b></td><td class="num">${pct(d.dd_52w_pct)}</td><td>${d.date}</td></tr>`;
   }
   $("pxTable").innerHTML=h;
 }
