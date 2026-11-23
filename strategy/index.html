@@ -125,6 +125,7 @@ footer{margin-top:40px;color:var(--ink-3);font-size:12px;text-align:center}
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <span class="badge" id="srcBadge">데이터: —</span>
       <span class="badge" id="asof">기준: —</span>
+      <button id="refreshBtn" aria-label="새로고침">🔄 새로고침</button>
       <button id="themeBtn" aria-label="테마 전환">🌓 테마</button>
     </div>
   </header>
@@ -519,10 +520,19 @@ bindInputs(); renderBT(); renderUS10(); renderCK(); renderAll();
 
 /* http(s)로 열린 경우 data.json이 더 최신이면 교체 (file:// 에서는 data.js 사용) */
 if (location.protocol.startsWith("http")){
-  fetch("data.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{
+  fetch("data.json?t=" + Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{
     if (j && (!DATA || j.generated_at >= (DATA.generated_at||""))){ DATA=j; SRC="data.json"; renderAll(); }
   }).catch(()=>{});
 }
+
+/* 새로고침 — 모바일 브라우저 캐시까지 확실히 우회 */
+$("refreshBtn").onclick = ()=>{
+  if (/^https?:$/.test(location.protocol)){
+    const u = new URL(location.href); u.searchParams.set("v", Date.now()); location.replace(u.toString());
+  } else {
+    location.reload();
+  }
+};
 </script>
 </body>
 </html>
