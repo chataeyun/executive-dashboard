@@ -816,6 +816,61 @@
     );
   }
 
+  /* ---------- 카드 풍차(churn) 전용 섹션 ---------- */
+  function ddayLabel(day) {
+    if (!day) return "확인 필요";
+    var d = new Date(day + "T00:00:00+09:00");
+    if (isNaN(d.getTime())) return "확인 필요";
+    var diff = Math.round(dayNumber(kstParts(d)) - dayNumber(kstParts(new Date())));
+    if (diff === 0) return "D-day";
+    return diff > 0 ? "D-" + diff : "D+" + Math.abs(diff);
+  }
+
+  function renderChurn(track) {
+    var c = track.churn;
+    if (!c) return "";
+    var steps = c.timeline || [];
+    var marks = { done: "✔", now: "▶", todo: "○" };
+    var holds = c.holdings || [];
+    var cur = c.current || {};
+    var facts = [
+      ["카드", cur.card], ["명의", cur.owner], ["신청 경로", cur.channel],
+      ["실적 달성", cur.progress], ["실적 마감", cur.deadline],
+      ["예상 실수령 캐시백", cur.cashback], ["누적 수익", cur.total],
+      ["관리비 자동이체", cur.autopay]
+    ];
+    return (
+      '<section class="dsec churn">' +
+        '<h3 class="dsec-title">💳 이번 분기 카드</h3>' +
+        '<dl class="churn-facts">' +
+          facts.map(function (f) {
+            return "<div><dt>" + esc(f[0]) + "</dt><dd>" + esc(f[1] || "확인 필요") + "</dd></div>";
+          }).join("") +
+        "</dl>" +
+        '<h3 class="dsec-title">🗓️ 진행 타임라인</h3>' +
+        '<ol class="churn-steps">' +
+          steps.map(function (st) {
+            var state = marks[st.state] ? st.state : "todo";
+            var dd = st.dday ? '<span class="churn-dday">' + esc(ddayLabel(st.date)) + "</span>" : "";
+            return (
+              '<li class="churn-step ' + state + '">' +
+                '<i aria-hidden="true">' + marks[state] + "</i>" +
+                '<div><strong>' + esc(st.label) + "</strong>" +
+                '<span>' + esc(st.date ? fmtDay(st.date) : (st.note || "날짜 확인 필요")) + "</span></div>" + dd +
+              "</li>"
+            );
+          }).join("") +
+        "</ol>" +
+        (holds.length
+          ? '<h3 class="dsec-title">📌 유지 중인 기존 카드</h3><ul class="churn-holds">' +
+            holds.map(function (h) {
+              return "<li><strong>" + esc(h.name) + "</strong><span>" + esc(h.state || "확인 필요") + "</span></li>";
+            }).join("") + "</ul>"
+          : "") +
+      "</section>"
+    );
+  }
+
   function renderDetail(track) {
     var s = statsFor(track);
     var f = trackFacts(track);
@@ -858,8 +913,9 @@
         "</header>" +
         '<div class="detail-cols">' +
           '<div class="detail-main">' +
+            renderChurn(track) +
             '<section class="dsec">' +
-              '<h3 class="dsec-title">🎯 추적 중인 대상 <span class="dsec-count">' + items.length + "</span></h3>" +
+              '<h3 class="dsec-title">🎯 추적 중인 대상<span class="dsec-count">' + items.length + "</span></h3>" +
               (items.length ? '<p class="dsec-hint">카드를 누르면 실행·회신 문구 복사, 답변 입력, 완료 표시 패널이 열립니다.</p>' : "") +
               (items.length
                 ? '<ul class="titems">' +
