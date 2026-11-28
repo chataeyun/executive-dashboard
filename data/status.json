@@ -1514,50 +1514,52 @@
       "tagline": "분기마다 카드 1장 · 혜택 받고 12개월 뒤 정리",
       "status": "active",
       "accent": "#f0a64a",
-      "summary": "분기에 카드 1장씩 발급해 실적을 채우고 캐시백을 받은 뒤, 12개월이 지나면 해지하는 흐름을 추적합니다. 원장 파일 연동 전이라 수치는 '확인 필요'로 두었습니다. 금액·카드번호는 표시하지 않습니다.",
+      "summary": "분기에 카드 1장씩 발급해 실적을 채우고 캐시백을 받은 뒤, 12개월이 지나면 해지하는 흐름을 추적합니다. 현재 2026 Q4 카드 신청 완료, 실적 달성 대기 단계입니다. 금액·카드번호는 표시하지 않습니다.",
       "next_run": {
-        "label": "원장 수치 입력 대기"
+        "label": "실적 마감 2026-12-31"
       },
       "last_run": {
-        "label": "트랙 신설 (2026-11-28)"
+        "label": "카드 신청 완료 (2026-11-28)"
       },
       "churn": {
         "current": {
-          "card": "확인 필요",
-          "owner": "확인 필요",
-          "channel": "확인 필요",
-          "progress": "확인 필요",
-          "deadline": "확인 필요",
-          "cashback": "확인 필요",
-          "total": "확인 필요",
-          "autopay": "확인 필요"
+          "card": "삼성카드 네이버페이 taptap",
+          "owner": "본인",
+          "channel": "네이버페이",
+          "progress": "신청 완료 · 실적 달성 대기 (모니모 마케팅 전체동의 필수)",
+          "deadline": "2026-12-31",
+          "cashback": "연회비 차감 후 순수익 예상 + 추가 혜택(휴대폰알림·자동납부) 가능",
+          "total": "입금 전 (캐시백 입금 후 합산)",
+          "autopay": "연결 전 (확인 중)"
         },
         "timeline": [
           {
             "label": "① 카드 발급",
-            "state": "todo",
-            "note": "확인 필요"
+            "state": "done",
+            "note": "신청 완료",
+            "date": "2026-11-28"
           },
           {
             "label": "② 실적 채우기",
-            "state": "todo",
-            "note": "확인 필요"
+            "state": "now",
+            "note": "12-31까지 실적 달성",
+            "date": "2026-12-31"
           },
           {
             "label": "③ 캐시백 입금",
             "state": "todo",
-            "note": "확인 필요"
+            "note": "2027-01-20 이후 입금 예정"
           },
           {
             "label": "④ 12개월 뒤 해지 가능",
             "state": "todo",
             "dday": true,
-            "note": "확인 필요"
+            "note": "2028-02~ 해지 가능 (발급 12개월 후)"
           },
           {
             "label": "⑤ 6개월 휴식",
             "state": "todo",
-            "note": "확인 필요"
+            "note": "해지 후 6개월 무실적 휴식"
           }
         ],
         "holdings": [
@@ -1576,11 +1578,11 @@
           "id": "cur-card",
           "kind": "진행",
           "title": "현재 진행 카드 · 실적 달성률",
-          "detail": "카드명·명의·신청 경로·실적 마감일은 원장 반영 후 표시",
+          "detail": "삼성카드 네이버페이 taptap · 본인 명의 · 네이버페이 경로 · 이벤트 응모 완료",
           "criteria": "마감 전 실적 100% 달성",
-          "status": "확인 필요",
+          "status": "신청 완료 · 실적 대기",
           "tone": "wait",
-          "next": "확인 필요",
+          "next": "2026-12-31까지 실적 달성 (모니모 마케팅 전체동의 확인)",
           "action_label": "원장 수치 반영",
           "action_prompt": "카드 풍차 원장에서 현재 진행 카드의 실적 달성률과 마감일을 확인해서 관제탑 카드 풍차 트랙에 반영해줘. 금액·카드번호는 빼고."
         },
@@ -1588,11 +1590,11 @@
           "id": "cashback",
           "kind": "수익",
           "title": "예상 캐시백 · 누적 수익",
-          "detail": "예상 실수령액과 누적 합계는 원장 반영 후 표시",
+          "detail": "연회비 차감 후 순수익 예상, 추가 혜택 가능 · 입금 전이라 누적 0건",
           "criteria": "캐시백 입금 확인 시 누적에 합산",
-          "status": "확인 필요",
+          "status": "입금 대기",
           "tone": "info",
-          "next": "확인 필요",
+          "next": "2027-01-20 이후 입금 확인",
           "action_label": "캐시백 입금 확인",
           "action_prompt": "카드 풍차 캐시백 입금 여부를 확인해서 알려줘. 금액은 빼고 입금 상태만."
         },
@@ -1600,11 +1602,11 @@
           "id": "cancel-dday",
           "kind": "해지",
           "title": "12개월 해지 가능일 (D-day)",
-          "detail": "발급일 기준 12개월 경과 전 해지하면 혜택 환수 가능",
+          "detail": "발급 12개월 후 해지 가능 (2028-02~)",
           "criteria": "12개월 경과 후 해지",
-          "status": "확인 필요",
+          "status": "대기",
           "tone": "wait",
-          "next": "확인 필요",
+          "next": "2028-02~ 해지 가능",
           "action_label": "해지 가능일 계산",
           "action_prompt": "카드 풍차 원장의 발급일 기준으로 12개월 해지 가능일을 계산해서 알려줘."
         },
@@ -1612,35 +1614,39 @@
           "id": "autopay",
           "kind": "연결",
           "title": "관리비 자동이체 연결 카드",
-          "detail": "어느 카드에 관리비가 연결돼 있는지 표시",
+          "detail": "관리비 자동이체 연결 카드는 아직 연결 전, 확인 중",
           "criteria": "해지 전 다른 카드로 옮기기",
-          "status": "확인 필요",
+          "status": "확인 중",
           "tone": "info",
-          "next": "확인 필요",
+          "next": "연결 카드 확인",
           "action_label": "연결 카드 확인",
           "action_prompt": "관리비 자동이체가 연결된 카드를 원장에서 확인해서 알려줘."
         }
       ],
       "open_questions": [
         {
-          "id": "cq-ledger",
-          "text": "카드 풍차 원장(05_finance)을 워커 PC에 동기화",
+          "id": "cq-autopay",
+          "text": "관리비 자동이체 연결 카드 확인",
           "who": "user",
-          "due": "이번 주",
-          "action_title": "카드 풍차 원장 동기화",
-          "action_label": "답변 입력·복사",
-          "input_placeholder": "예) 원장 파일 Drive에 올렸어",
-          "action_prompt": "카드 풍차 원장 파일을 Claude_Tasks/01_input에 넣었어. 관제탑 수치 반영해줘."
+          "due": "이번 주"
         }
       ],
       "schedule": [
         {
-          "when": "분기 1회",
-          "what": "새 카드 1장 발급·실적 채우기"
+          "when": "2026-12-31",
+          "what": "실적 마감 (삼성카드 taptap)"
         },
         {
-          "when": "발급 12개월 후",
-          "what": "해지 가능 D-day 확인"
+          "when": "2027-01-20 이후",
+          "what": "캐시백 입금 확인"
+        },
+        {
+          "when": "2027 Q1 (3월)",
+          "what": "다음 카드 발급 (농협 또는 현대)"
+        },
+        {
+          "when": "2028-02~",
+          "what": "해지 가능"
         }
       ],
       "owners": {
@@ -1663,18 +1669,30 @@
         {
           "id": "ledger-sync",
           "text": "원장 수치 반영 (현재 카드·캐시백·발급일)",
-          "done": false,
+          "done": true,
           "role": "main"
         },
         {
           "id": "dday-set",
           "text": "12개월 해지 D-day 날짜 입력",
-          "done": false,
+          "done": true,
           "role": "main"
         },
         {
           "id": "autopay-check",
           "text": "관리비 자동이체 연결 카드 확인",
+          "done": false,
+          "role": "main"
+        },
+        {
+          "id": "perf-met",
+          "text": "12-31까지 실적 달성",
+          "done": false,
+          "role": "main"
+        },
+        {
+          "id": "cashback-in",
+          "text": "캐시백 입금 확인 (2027-01-20 이후)",
           "done": false,
           "role": "main"
         }
